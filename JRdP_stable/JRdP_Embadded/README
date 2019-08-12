@@ -1,0 +1,54 @@
+#### README Joueur Rdp:
+
+Dev: ZACRI M'barek
+Encadrants: M.Patrick Danès et M.Olivier Roussel.
+Email: mbzacri@laas.fr 
+
+=======Description:
+
+Joueur Rdp est un outil de supervision par Réseau de petri d'une architecture de composants GenoM. C'est écrit en language tcl et dépend des packages open-source suivants:
+
+1- tcl-genomix ( https://git.openrobots.org/projects/tcl-genomix ):: On peut l'obtenir avec robotpkg ( http://robotpkg.openrobots.org/ ).
+ 
+2- vectcl ( https://auriocus.github.io/VecTcl/ ) :: Pour l'ajouter, il faut télécharger le dépot (le mettre dans un endroit logique, e.g ...openrobots/lib) et suivre les étapes suivantes:
+
+	2.1- executer : ./configure puis make puis make install en se plaçant dans le chemin du dépot ( cela permet de générer les "exécutables", les compiler puis les mettre ou il faut).
+
+	2.2- Extendre la variable d'environnement TCLLIBPATH avec le chemin contenant le dépot( e.g export TCLLIBPATH= "$TCLLIBPATH chemin_dépot )
+
+
+=======Inventaire de fichiers:
+
+1-Joueur_Rdp.tcl: Contient le code de la boucle du joueur de rdp. Sauf cas de développement, ce code ne doit pas être changé pour jouer un certain Rdp ( à ne pas changer ).
+
+2-Data.tcl: Contient des fonctions internes ( à ne pas changer ).
+
+3-Matrices.tcl: Contient la définition matricielle du Rdp à jouer.
+
+3-Configuration_RdP.tcl: Contient la configuration de l'évolution du réseau de Petri.
+
+4-Logs.tcl: Les Logs crées en cours du jeu du Rdp. 
+
+
+======Étapes d'utilisation:
+
+1-Définir le Rdp (dans Matrices.tcl). La méthodologie de la description matricielle ( approche transition ) est décrite dans le lien suivant: (http://jbsp.fr/RdpDir/matrices.html).
+
+2-Faire les initialisations nécessaire:
+
+	2-1-Chargement des composants, connections des ports et définitions des variables de l'utilisateur.
+
+	2-2-Initialisation Marquage.
+
+	2-3-Définition du "contexte" de chaque transition:
+
+		2-3-1-Définition de la condition de la transition. Deux cas se posent, soit on associe une condition valide initialement à une transition qui sera remise à 0 sur tirage de cette dernière ( avec Init_MAU_conditions_transition ).Soit on sensibilise la transition sur un status bien défini du service d'une transition ( avec sensibilise_transition ). Dans le cas du status "error", on specifie ( ou pas ) une exception pour sensibiliser la transition. 
+
+		2-3-2-Association d'un service à une transition. Le service sera appellé sur tirage de la condition ( avec associer_service_transition ).
+
+4-Définir les actions sur les places ( toujours dans Configuration.tcl ).
+
+5-(!!!) Se placer dans le dossier contenant les fichiets *.tcl et exécuter ( avec tclsh ou eltclsh ) le fichier Joueur_Rdp.tcl
+
+
+   
