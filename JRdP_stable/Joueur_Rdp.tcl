@@ -38,8 +38,8 @@ namespace eval JRdP {
 	}
 
 	source $path/Generated_Tcl/Configuration_RdP.tcl ; #Chargement Configuration
-	foreach req $valid_req {
-		regexp {_t[0-9]} [lindex $req 0] trim
+	foreach req $requetes_actions {
+		regexp {_t([0-9]{1,})} [lindex $req 0] trim
 		set reqq [string trimright [lindex $req 0] "$trim"]
 		set reqq [regsub {_} [lindex $reqq 0] {::}]
 		set test [catch {$reqq -h} exception]

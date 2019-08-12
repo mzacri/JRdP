@@ -38,6 +38,7 @@
 
 		set Flags [liste_arrays $nb_t];  				#vecteur association Flags et  Transitions.
 		set Actions_transitions [liste_vide $nb_t]; 			#vecteur Actions_transitions : contient les actions sur chaque transition.
+
 		#pour gérer les transitions non tracés graphiquement:
 		proc liste_pas_vide { length } {
 			set liste "";
@@ -150,7 +151,7 @@
 	#6----fonction association d'un Flag de transition à une Requête de service: 
 
 
-		proc sensibilise_transition_service { transition id_req status {exception ""} } {
+		proc sensibilise_transition_service { transition id_req status {exception "ex_vide"} } {
 
 			array set l [lindex $JRdP::Flags $transition];
 			set l($id_req)  [list "0.0" "$status" "$exception" "req_vide"];
@@ -237,14 +238,14 @@
 
 						set liste $::JRdP::Requests_status($request);
 						set status [lindex $liste 0]
-						set exception [lindex $liste 0]
+						set exception [lindex $liste 1]
 
 						#Mise à jour de la valeur du Flag:
 						if { $status == [lindex $lst 1] } { 
 				
 							lset lst 0 "1.0";
 							set req ::JRdP::$request
-							if { ( $status == "error" && [lindex $lst 2] != $exception ) || [expr $$req] == [lindex $lst 3] } {
+							if { ( $status == "error" && [lindex $lst 2] != [dict get $exception ex] && [lindex $lst 2] != "default") || [expr $$req] == [lindex $lst 3] } {
 
 									lset lst 0 "0.0";
 							} 
@@ -310,7 +311,7 @@
 		proc FIRE_TRANSITIONS {} {
 
 			for {set t 0} {$t < $JRdP::nb_t} { incr t } {
-				if { [expr [lindex $JRdP::Conditions $t] * [lindex $JRdP::Transitions_sensibilisees $t]] } {
+				if { [expr [lindex $JRdP::Conditions $t] * [lindex $JRdP::Transitions_sensibilisees $t] ] } {
 
 					lset JRdP::Transitions_valides $t 1.0;	
 				} else {
@@ -340,7 +341,6 @@
 	#15---fonction formulation de la condition à partir des flags associées:
 
 		proc GENERATE_CONDITIONS { } {
-
 			for {set t 0} {$t<$JRdP::nb_t} { incr t } {
 				#On génére les conditions des transitions sensibilisées
 				if { [lindex $JRdP::Transitions_sensibilisees $t] == 1.0 } {
@@ -376,19 +376,16 @@
 					#Marquage local ( au niveau du flag ) , sur tirage de la transition , des requetes qui existent ( lancées ) et dont le statut est sur "done" ou "error" ( avec la bonne exception ).
 
 					foreach {request lst} [lindex $JRdP::Flags $t] {
-						if {[info exists ::JRdP::Requests_status($request)] } {
-							set liste $::JRdP::Requests_status($request);
-							set status [lindex $liste 0]
-							set exception [lindex $liste 1] 
+						set flag [lindex $lst 0]
+						set status [lindex $lst 1]
+						if {$flag == 1 && $status != "sent" } { 
 							set req ::JRdP::$request
-
-							if { $status == "done" || ( $status == "error" && [lindex $lst 2] == $exception ) } {
-								lset lst 3 [expr $$req];
-								array set l [lindex $JRdP::Flags $t];
-								set l($request) $lst;
-								lset JRdP::Flags $t [array get l];
-								array unset l;  
-							} 
+							lset lst 3 [expr $$req]; #sauvgarde de la dernière requête qui a validé le flag ( en dehors du status "sent" )
+							array set l [lindex $JRdP::Flags $t];
+							set l($request) $lst;
+							lset JRdP::Flags $t [array get l];
+							array unset l;
+							
 						}
 						
 					}
