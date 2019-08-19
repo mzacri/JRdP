@@ -8,7 +8,7 @@ namespace eval Generate_config {
 		#Ecriture dans le buffer Config ( Congiguration_RdP ) :
 
 		proc Ecriture_Config { components transitions Script ports places } { 
-			puts $JRdP::Generate_config::Config "##### I- Chargement des composants \n\nset handle \[genomix\]; #Lancement deomon genomix , roscore et serveur genomix à l'aide du macro genomix\nset components { $components };  	#Modifiable		#Composant .s à charger\nLoad_components \$handle \$components ; #Chargement des composants (components) sur le deamon genomix (handle)\n\n##### II- Connection des capteurs:\n#---syntax: Connect_port \$port_name \$component1(port in) \$component2(port out)\n\n$ports \n\n##### III- Script_TCL :\n\nnamespace eval Script {\neval \{\t$Script\}\n}\n\n##### V- Structure dynamique du RdP ( association transition service conditions ) :\n\n$transitions \n\n#### VI- actions sur les places:\n\n proc ACTIONS_PLACES {} { \n\tglobal f;\n\tglobal Arret;\n\t$places\n}\n"
+			puts $JRdP::Generate_config::Config "##### I- Chargement des composants \n\nset handle \[genomix\]; #Lancement deomon genomix , roscore et serveur genomix à l'aide du macro genomix\nset components { $components };  	#Modifiable		#Composant .s à charger\nLoad_components \$handle \$components ; #Chargement des composants (components) sur le deamon genomix (handle)\n\n##### II- Connection des capteurs:\n#---syntax: Connect_port \$port_name \$component1(port in) \$component2(port out)\n\n$ports \n\n##### III- Script_TCL :\n\nnamespace eval Script {\n\t$Script\n\n}\n\n##### V- Structure dynamique du RdP ( association transition service conditions ) :\n\n$transitions \n\n#### VI- actions sur les places:\n\n proc ACTIONS_PLACES {} { \n\tglobal f;\n\tglobal Arret;\n\t$places\n}\n"
 			puts $JRdP::Generate_config::Config "###À ne pas modifier:\nset Flags_cond [list $JRdP::Flags_cond]\nset requetes_actions [list $JRdP::Generate_config::requetes_actions]\n"
 		}
 
@@ -104,7 +104,7 @@ namespace eval Generate_config {
 						lappend requetes_actions [list [join [list [lindex $service 0] [lindex $service 1] "t$transition"] "_"] "$transition"]
 					} elseif { $len == 3 } {
 						set parametres [lindex $service 2];
-						set parametres [regsub {\*} $parametres {$Script::}]
+						set parametres [regsub {\$} $parametres {$Script::}]
 						set transitions [join [list $transitions "associer_service_transition $transition [lindex $service 0] [lindex $service 1] $parametres ; #Associer le service [lindex $service 1] du composant [lindex $service 0] à la transition $transition avec [lindex $service 2] comme paramètre\n"] ""]
 						lappend requetes_actions [list [join [list [lindex $service 0] [lindex $service 1] "t$transition"] "_"] "$transition"] 
 					} else {
@@ -289,7 +289,7 @@ namespace eval Generate_config {
 
 			#-----------------------------------Si la ligne commence par n. Récupération de la config Ports,Script TCL ou Components.
 
-			} elseif { [string index $line 0]== "n" } {
+			} elseif { [string index $line 0]== "n" || [string index $line 0]== "a" } {
 
 				regexp " \{.*\}" $line ligne
 				if { [info exists ligne] } {
@@ -297,10 +297,11 @@ namespace eval Generate_config {
 					set ligne [string trimright [string trimleft $ligne " {"] "}"];
 					#\\n n'est pas detecté par split. Je le substitue par ° puis je splite:
 					set ligne [regsub -all -expanded {\\\\n} $ligne "°"]
+					set ligne [regsub -all {\\(.)} $ligne {\1}]
 					set ligne [split $ligne "°"]
 					#Enlever les lignes vides
 					set ligne [lsearch -all -inline -not -exact $ligne {}]
-					regexp {n .* [10] \{} $line note
+					regexp {[na] .* [10] \{} $line note
 					#numéro de la note
 					set note [string trimleft [lindex [split $note " "] 3] "n"]
 
@@ -309,9 +310,7 @@ namespace eval Generate_config {
 					if { [string match -nocase "*Script TCL*" [lindex $ligne 0]] } {			
 						set ligne [lrange $ligne 1 end]
 						#Tout la note du script, sauf la première ligne: Script TCL, est mise dans fichier Configuration_RdP:
-						foreach element $ligne {
-							set Script [ join [list $Script "\n$element\n"] "" ]	
-						}
+						set Script [ join $ligne "\n\t" ]	
 						set report_config [join [list $report_config "\nScript TCL: configurés"]] 
 
 					#Configuration Ports:
