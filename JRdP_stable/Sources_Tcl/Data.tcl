@@ -151,7 +151,7 @@
 	#6----fonction association d'un Flag de transition à une Requête de service: 
 
 
-		proc sensibilise_transition_service { transition id_req status {exception "ex_vide"} } {
+		proc sensibilise_transition_service { transition id_req status {exception "default"} } {
 
 			array set l [lindex $JRdP::Flags $transition];
 			set l($id_req)  [list "0.0" "$status" "$exception" "req_vide"];
