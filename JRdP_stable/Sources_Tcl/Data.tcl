@@ -55,11 +55,21 @@
 
 		proc Load_components { handle components } {
 
-			foreach component $components {  #Chargement des composants
-				exec xterm -hold -e $component-ros & ;
-				after 500;
-				$handle load $component
-				puts $JRdP::f "::::: $component chargé sur $handle :::::";
+			foreach {component inst_nom} $components {  #Chargement des composants
+				
+				exec xterm -hold -e $component-ros -i $inst_nom & ;
+				while {1} {
+					set status [exec rostopic list | grep -c $inst_nom ];  
+					if { $status !=0 } {
+						$handle load $component -i $inst_nom;
+						puts $JRdP::f "::::: $component chargé sur $handle :::::";
+						break;
+			
+					}
+					puts "En attente de démarrage de $component as $inst_nom..."
+					after 500;
+				}
+				
 
 			}
 
@@ -392,9 +402,18 @@
 		     
 					puts $JRdP::f "------Transition t$t tirée à [clock format $systemTime -format %H:%M:%S]"
 					puts -nonewline $JRdP::f "------Evolution Marquage après $JRdP::cr tour boucle :";affiche_marquage $JRdP::f;# Logs <--Marquage 
+
+					
+
+
 					puts "------Transition t$t tirée à [clock format $systemTime -format %H:%M:%S]"
 					puts  "------Evolution Marquage après $JRdP::cr tour boucle :";affiche_marquage;# Logs <--Marquage	
 					set JRdP::cr 0;
+
+					#Communication avec nd à travers le named pipe fifo:
+					puts $JRdP::fifo "t$t"
+					flush $JRdP::fifo
+					
 				}	
 		
 

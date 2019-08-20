@@ -38,6 +38,25 @@ namespace eval JRdP {
 	}
 
 	source $path/Generated_Tcl/Configuration_RdP.tcl ; #Chargement Configuration
+	source $path/Sources_Tcl/Pilot_ndstepper.tcl ; #Chargement Configuration
+
+	if [catch {exec mkfifo jrdp2nd} ex] {
+		exec rm jrdp2nd
+		exec mkfifo jrdp2nd
+	} 
+	exec nd temp_SG.ndr &
+	while 1 {
+		set test_open [catch {set fifo [open jrdp2nd {WRONLY NONBLOCK}]} ex ]
+		
+		if { !$test_open } {
+			break;
+		}
+		puts "En attente de connextion avec nd...."
+		after 1500;
+	}
+	
+	#Vérification des services fournis par les composants:
+
 	foreach req $requetes_actions {
 		regexp {_t([0-9]{1,})} [lindex $req 0] trim
 		set reqq [string trimright [lindex $req 0] "$trim"]
@@ -48,6 +67,8 @@ namespace eval JRdP {
 			exec pkill xterm; exec pkill genomixd; exec pkill roscore; exit 1; 
 		}
 	}
+
+	#Logs:
 	puts "JRdP démarre...";
 	puts "Marquage Initial:  "; affiche_marquage;
 
@@ -56,7 +77,6 @@ namespace eval JRdP {
 	set dpt 1 ; #variable depart boucle
 	set cr 0 ; #compteur de tours de boucle
 	set Arret 0;
-
 	#####LOGS:
                       
 	puts $f "******Conditions initials: $Flags";
@@ -128,6 +148,8 @@ namespace eval JRdP {
 
 	exec pkill roscore 				;	#Fin de roscore 
 	exec pkill genomixd				;	#Fin de genomixd
+	exec  rm jrdp2nd;  #suppresion du named pipe
+	#exec rm temp_SG.ndr;  #suppresion du temp
 
 	puts "Voulez vous fermer les consoles des composants ? (1 ou 0)"
 	set terminer [gets stdin];

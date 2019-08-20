@@ -341,7 +341,13 @@ namespace eval Generate_config {
 						set ligne [lrange $ligne 1 end]
 						foreach element $ligne {
 							if { ![regexp {#} $element] } {
-								set components [join [list $components "$element"] " "]	
+								regexp {(.*) as (.*)} $element tout component instance_component 
+								if [info exists component] { 
+									set components [join [list $components "$component" "$instance_component" ] " "]
+									unset component 
+								} else {
+									set components [join [list $components [lindex $element 0] [lindex $element 0] ] " "] 
+								}	
 							}
 						}
 						set report_config "$report_config\nComponents: configurés"
