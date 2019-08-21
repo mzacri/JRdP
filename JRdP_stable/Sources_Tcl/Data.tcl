@@ -170,7 +170,7 @@
 		}
 
 	#7----fonction marquage place:
-
+	
 		proc marquage_place { place } {
 			return [lindex $JRdP::M $place]
 		}

@@ -44,7 +44,7 @@ namespace eval JRdP {
 		exec rm jrdp2nd
 		exec mkfifo jrdp2nd
 	} 
-	exec nd temp_SG.ndr &
+	set nd_pid [exec nd temp_SG.ndr &]
 	while 1 {
 		set test_open [catch {set fifo [open jrdp2nd {WRONLY NONBLOCK}]} ex ]
 		
@@ -69,7 +69,7 @@ namespace eval JRdP {
 	}
 
 	#Logs:
-	puts "JRdP démarre...";
+	puts "\n\nJRdP démarre...";
 	puts "Marquage Initial:  "; affiche_marquage;
 
 	######Joueur de Rdp:
@@ -144,18 +144,18 @@ namespace eval JRdP {
 
 	#Gestion des consoles à la fin d'exécution:
 
-	puts "Terminé! Vous pouvez vérfier les Logs"
+	puts "Terminé! Vous pouvez vérfier les Logs\n\n"
 
 	exec pkill roscore 				;	#Fin de roscore 
 	exec pkill genomixd				;	#Fin de genomixd
 	exec  rm jrdp2nd;  #suppresion du named pipe
-	#exec rm temp_SG.ndr;  #suppresion du temp
+	exec rm temp_SG.ndr;  #suppresion du temp
 
-	puts "Voulez vous fermer les consoles des composants ? (1 ou 0)"
+	puts "Voulez vous fermer les consoles des composants et le stepper nd ? (1 ou 0)"
 	set terminer [gets stdin];
 
 	if { $terminer } {
-	
+		exec kill -9 $nd_pid
 		exec pkill xterm;
 
 	}

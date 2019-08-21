@@ -1,5 +1,5 @@
 namespace eval Generate_config {
-	puts "Voulez vous générer la configuration du RdP à partir le fichier Source_Graphique.ndr? (1 ou 0):"
+	puts "Voulez vous générer la configuration du RdP à partir le fichier source.ndr? (1 ou 0):"
 	set gen [gets stdin];
 
 
@@ -125,7 +125,7 @@ namespace eval Generate_config {
 		#1****Ouverture du buffers:
 
 		puts "REPORT:Génération $JRdP::path/Generated_Tcl/Configuration_RdP.tcl encours ..."
-		set fd [open "Source_Graphique.ndr" r]	
+		set fd [open "source.ndr" r]	
 		set Config [open "Generated_Tcl/Configuration_RdP.tcl" w+]
 
 		#2***Variables à mettre dans Configuration_Rdp.tcl:
@@ -167,8 +167,8 @@ namespace eval Generate_config {
 				if { [info exists ligne] } {
 
 					#Récupération des conditions et des actions:
-					regexp {Conditions:(.*); Actions:.*;} $ligne tous conditions
-					regexp {Conditions:.*; Actions:(.*);} $ligne tous actions 
+					regexp {Conditions:(.*);[\s]{0,}Actions:.*;} $ligne tous conditions
+					regexp {Conditions:.*;[\s]{0,}Actions:(.*);} $ligne tous actions 
 
 
 					if { [regexp -nocase {[a-z\?\!]} $conditions] } {
@@ -287,7 +287,7 @@ namespace eval Generate_config {
 					unset ligne;
 				}
 
-			#-----------------------------------Si la ligne commence par n. Récupération de la config Ports,Script TCL ou Components.
+			#-----------------------------------Si la ligne commence par n ou par a. Récupération de la config Ports,Script TCL ou Components.
 
 			} elseif { [string index $line 0]== "n" || [string index $line 0]== "a" } {
 

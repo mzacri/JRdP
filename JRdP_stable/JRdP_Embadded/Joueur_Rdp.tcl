@@ -30,7 +30,7 @@ namespace eval JRdP {
 
 	puts -nonewline $f "------Marquage Initial:  "; affiche_marquage $f;                       
 	puts $f "******Conditions initials: $Flags";
-	puts $f "\nVecteur actions sur trs dans l'ordre des trs: $actions_transitions\n" ;
+	puts $f "\nVecteur actions sur trs dans l'ordre des trs: $Actions_transitions\n" ;
 	puts $f "Nombre de transitions: $nb_t // Nombre de places: $nb_p"
 	puts $f "Boucle Joueur démarre:"
 

@@ -1,0 +1,16 @@
+---------- LOGS :: 20:20:43 :: Superviseur  
+::::: Deamon genomix démarré: genomix1 ::::: 
+::::: demo chargé sur genomix1 :::::
+------Marquage Initial:  { P0 :: 1.0  }
+******Conditions initials: {} {rien_GetSpeed_t0 {0.0 done default req_vide}}
+
+Vecteur actions sur trs dans l'ordre des trs: {{set ::JRdP::rien_GetSpeed_t0  [::rien::GetSpeed -s  &] ;;set ::JRdP::Requests_status(rien_GetSpeed_t0) [list "zero" "exception_vide"]} {namespace eval Script {eval {set timer [clock seconds]}}}} {{namespace eval Script {eval {set JRdP::Arret 1}}}}
+
+Nombre de transitions: 2 // Nombre de places: 3
+Boucle Joueur démarre:
+------Transition t0 tirée à 20:20:47
+------Evolution Marquage après 0 tour boucle :{ P1 :: 1.0  }
+Report: rien_GetSpeed_t0 on done
+------Transition t1 tirée à 20:20:57
+------Evolution Marquage après 65341 tour boucle :{ P2 :: 1.0  }
+***********************FIN************************

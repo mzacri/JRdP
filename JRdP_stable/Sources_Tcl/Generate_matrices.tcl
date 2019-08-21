@@ -1,11 +1,11 @@
 	namespace eval Generate_matrice {
-	puts "Voulez vous générer la définition du RdP à partir du Source_Graphique.ndr? (1 ou 0):"
+	puts "Voulez vous générer la définition du RdP à partir du source.ndr? (1 ou 0):"
 	set gen [gets stdin];
 
 	if { $gen } {
 		#Ouverture du buffers:
 		puts "REPORT:Génération $JRdP::path/Generated_Tcl/Matrices.tcl encours ..."
-		set fd [open "Source_Graphique.ndr" r]	
+		set fd [open "source.ndr" r]	
 		set mat [open "Generated_Tcl/Matrices.tcl" w+]
 		#Variables:
 		set nb_t 0;#nombre de transitions.
@@ -33,7 +33,7 @@
 					if { $nb_p < $place } { set nb_p $place }
 					lappend post [list "$place" "$transition" "$poids"]
 				#Sinon : ERROR	
-				} else { puts "configuration \{ $line \} dans Source_Graphique.ndr n'est pas valide"; exit 1; }
+				} else { puts "configuration \{ $line \} dans source.ndr n'est pas valide"; exit 1; }
 			#Si la ligne commence par p. Récupération du marquage: 
 			} elseif { [string index $line 0]== "p" } {
 				#Si on detecte un pettern de type {p(chiffres==place) (chiffres==marquage) n}
