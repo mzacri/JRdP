@@ -59,12 +59,13 @@
 				
 				exec xterm -hold -e $component-ros -i $inst_nom & ;
 				while {1} {
-					set status [exec rostopic list | grep -c $inst_nom ];  
-					if { $status !=0 } {
-						$handle load $component -i $inst_nom;
-						puts $JRdP::f "::::: $component chargé sur $handle :::::";
-						break;
+					if ![catch {set status [exec rostopic list | grep -c $inst_nom ]} ex] {  
+						if { $status !=0 } {
+							$handle load $component -i $inst_nom;
+							puts $JRdP::f "::::: $component chargé sur $handle :::::";
+							break;
 			
+						}
 					}
 					puts "En attente de démarrage de $component as $inst_nom..."
 					after 500;
@@ -255,8 +256,8 @@
 				
 							lset lst 0 "1.0";
 							set req ::JRdP::$request
+							#puts $JRdP::f "1// $req 4// $status 2//  [lindex $lst 3] 3// [expr $$req] " 
 							if { ( $status == "error" && [lindex $lst 2] != [dict get $exception ex] && [lindex $lst 2] != "default") || [expr $$req] == [lindex $lst 3] } {
-
 									lset lst 0 "0.0";
 							} 
 						
@@ -289,7 +290,7 @@
 					set liste $::JRdP::Requests_status($request);
 					set old_status [lindex $liste 0] 
 					if { $old_status != $status } {
-
+						
 						lset lst 0 $status
 
 						puts $JRdP::f "Report: $request on $status";

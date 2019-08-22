@@ -40,33 +40,38 @@ namespace eval JRdP {
 	source $path/Generated_Tcl/Configuration_RdP.tcl ; #Chargement Configuration
 	source $path/Sources_Tcl/Pilot_ndstepper.tcl ; #Chargement Configuration
 
+	#Vérification des services fournis par les composants:
+
+	foreach req $requetes_actions {
+		set service [lindex $req 1]
+		set composant [lindex $req 0]
+		set transition [lindex $req 2]
+		set test [catch {[join [list $composant $service] "::"] -h} exception]
+		if { $test } {
+			puts "Config_ERROR:Le service $service n'est pas fourni par le composant $composant. Vérifier le nom du composant et le nom de service dans les actions de la transition $transition"
+			exec pkill xterm; exec pkill genomixd; exec pkill roscore; exit 1; 
+		}
+	}
+
+	#Connextion avec nd:
 	if [catch {exec mkfifo jrdp2nd} ex] {
 		exec rm jrdp2nd
 		exec mkfifo jrdp2nd
 	} 
 	set nd_pid [exec nd temp_SG.ndr &]
+
+
 	while 1 {
 		set test_open [catch {set fifo [open jrdp2nd {WRONLY NONBLOCK}]} ex ]
 		
 		if { !$test_open } {
 			break;
 		}
-		puts "En attente de connextion avec nd...."
+		puts "En attente de connexion avec nd...."
 		after 1500;
 	}
 	
-	#Vérification des services fournis par les composants:
-
-	foreach req $requetes_actions {
-		regexp {_t([0-9]{1,})} [lindex $req 0] trim
-		set reqq [string trimright [lindex $req 0] "$trim"]
-		set reqq [regsub {_} [lindex $reqq 0] {::}]
-		set test [catch {$reqq -h} exception]
-		if { $test } {
-			puts "Config_ERROR:La requete $reqq n'est pas un service fourni par le composant. Vérifier le nom du composant et le nom de service de la requete [lindex $req 0] des services de la transition [lindex $req 1]"
-			exec pkill xterm; exec pkill genomixd; exec pkill roscore; exit 1; 
-		}
-	}
+	
 
 	#Logs:
 	puts "\n\nJRdP démarre...";

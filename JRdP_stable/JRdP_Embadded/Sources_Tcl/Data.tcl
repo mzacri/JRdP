@@ -59,12 +59,13 @@
 				
 				exec xterm -hold -e $component-ros -i $inst_nom & ;
 				while {1} {
-					set status [exec rostopic list | grep -c $inst_nom ];  
-					if { $status !=0 } {
-						$handle load $component -i $inst_nom;
-						puts $JRdP::f "::::: $component chargé sur $handle :::::";
-						break;
+					if ![catch {set status [exec rostopic list | grep -c $inst_nom ]} ex] {  
+						if { $status !=0 } {
+							$handle load $component -i $inst_nom;
+							puts $JRdP::f "::::: $component chargé sur $handle :::::";
+							break;
 			
+						}
 					}
 					puts "En attente de démarrage de $component as $inst_nom..."
 					after 500;

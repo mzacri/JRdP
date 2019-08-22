@@ -21,7 +21,7 @@ namespace eval Generate_config {
 				set flag_conditions_script 1;
 				#Pour chaque formule dans scripts
 				foreach script_untrimmed $scripts {
-					set script [string trimright [string trimleft $script_untrimmed " ?"] "?"] 
+					set script [string trimright [string trimleft $script_untrimmed "?"] "?"] 
 					if { [regexp -nocase {[a-z0-9]} $conditions] } {
 						#Ajout de la fonction nécessaire dans la variable transitions:
 						set transitions [join [list $transitions "\t# sensibilise partiellement la transition $transition sur la formule $script \n"] ""] 	
@@ -52,7 +52,7 @@ namespace eval Generate_config {
 				set request_splitted ""; #son contenu
 				#Pour chaque requete dans services
 				foreach service $services {
-					set request [string trimright [string trimleft $service " /"] "/"]
+					set request [string trimright [string trimleft $service "/"] "/"]
 					#Séparation sur les espaces:
 					set request_splitted [regexp -all -inline {\S+} $request]
 					#Premier indice est le nom de la service
@@ -84,7 +84,7 @@ namespace eval Generate_config {
 		
 			} else {
 			}
-			return [list $conditions $transitions ]
+			return [list $conditions $transitions $requetes_conditions]
 		}
 
 		#Traitement des services contenu dans les actions:
@@ -94,19 +94,19 @@ namespace eval Generate_config {
 			if { [llength $services]>0 } {
 				foreach service $services {
 
-					set service [string trimright [string trimleft $service " /"] "/"]
+					set service [string trimright [string trimleft $service "/"] "/"]
 					#Séparation sur les espaces:
 					set service [regexp -all -inline {\S+} $service]
 					set len [llength $service]
 
 					if { $len == 2 } {
 						set transitions [join [list $transitions "associer_service_transition $transition [lindex $service 0] [lindex $service 1] ; #Associer le service [lindex $service 1] du composant [lindex $service 0] à la transition $transition\n"] ""] 
-						lappend requetes_actions [list [join [list [lindex $service 0] [lindex $service 1] "t$transition"] "_"] "$transition"]
+						lappend requetes_actions [list [lindex $service 0] [lindex $service 1] "t$transition"]
 					} elseif { $len == 3 } {
 						set parametres [lindex $service 2];
 						set parametres [regsub {\$} $parametres {$Script::}]
 						set transitions [join [list $transitions "associer_service_transition $transition [lindex $service 0] [lindex $service 1] $parametres ; #Associer le service [lindex $service 1] du composant [lindex $service 0] à la transition $transition avec [lindex $service 2] comme paramètre\n"] ""]
-						lappend requetes_actions [list [join [list [lindex $service 0] [lindex $service 1] "t$transition"] "_"] "$transition"] 
+						lappend requetes_actions [list [lindex $service 0] [lindex $service 1] "t$transition"] 
 					} else {
 						puts "Config_ERROR: Configuration des actions de la transition $transition n'est pas valable ! \n"
 						Ecriture_Config $components $transitions $script $ports $places; exit 1;
@@ -174,9 +174,9 @@ namespace eval Generate_config {
 					if { [regexp -nocase {[a-z\?\!]} $conditions] } {
 
 						#Detecter tous les petterns de type { /(nimporte)/}. Récupération condition sur service:
-						set conditions_services [regexp -all -inline {(?: /.*/){1,1}?} $conditions];
+						set conditions_services [regexp -all -inline {(?:/.*/){1,1}?} $conditions];
 						#Detecter tous les petterns de type { /(nimporte)/}. Récupération condition sur script:
-						set conditions_scripts [regexp -all -inline {(?: \?.*\?){1,1}?} $conditions];
+						set conditions_scripts [regexp -all -inline {(?:\?.*\?){1,1}?} $conditions];
 
 						#Ajout "#----Formule logique: ..." dans la variable transitions:
 						set transitions [join [list $transitions "\t#----Formule logique: $conditions:\n\n"] ""]
@@ -186,6 +186,7 @@ namespace eval Generate_config {
 						set resultat [Traitement_services_dans_conditions $transition $conditions_services $conditions $components $transitions $Script $ports $places $requetes_conditions];
 						set transitions [lindex $resultat 1]
 						set conditions  [lindex $resultat 0]
+						set requetes_conditions [lindex $resultat 2]
 
 						#Traitement des scripts contenus dans Conditions:
 
@@ -217,11 +218,11 @@ namespace eval Generate_config {
 					if { [regexp -nocase {[a-z\?\!]} $actions] } {
 
 						#Detecter tous les petterns de type { /(nimporte)/ }. Récupération condition sur service:
-						set actions_services [regexp -all -inline {(?: /.*/){1,1}?} $actions];
+						set actions_services [regexp -all -inline {(?:/.*/){1,1}?} $actions];
 						#Detecter tous les petterns de type { ?(nimporte)? }. Récupération condition sur variable:
-						set actions_scripts [regexp -all -inline {(?: \?.*\?){1,1}?} $actions];
+						set actions_scripts [regexp -all -inline {(?:\?.*\?){1,1}?} $actions];
 						#Detecter tous les petterns de type { //(nimporte)// }. Récupération condition sur fonction:
-						set actions_fonctions [regexp -all -inline {(?: §.*§){1,1}?} $actions];
+						set actions_fonctions [regexp -all -inline {(?:§.*§){1,1}?} $actions];
 
 						#Traitement des services contenus dans actions:
 
@@ -233,7 +234,7 @@ namespace eval Generate_config {
 
 						if { [llength $actions_scripts]>0 } {
 							foreach script $actions_scripts {
-								set script [string trimright [string trimleft $script " ?"] "?"]
+								set script [string trimright [string trimleft $script "?"] "?"]
 								set transitions [join [list $transitions "associer_script_transition $transition \{$script\}; #Associer le script $script à l'action sur la transition $transition\n"] ""] 
 					
 							}
@@ -243,7 +244,7 @@ namespace eval Generate_config {
 
 						if { [llength $actions_fonctions]>0 } {
 							foreach fonction $actions_fonctions {
-								set fonction [string trimright [string trimleft $fonction " §"] "§"]
+								set fonction [string trimright [string trimleft $fonction "§"] "§"]
 								lappend config_fonctions [list "temp_$fonction" $transition]
 							} 
 						}
@@ -386,9 +387,9 @@ namespace eval Generate_config {
 				set actions [expr $$actions] ; #acces au contenu de la fonction dont le nom est contenu dans $actions
 
 				#Detecter tous les petterns de type { /(nimporte)/ }. Récupération condition sur service:
-				set actions_services [regexp -all -inline {(?: /.*/){1,1}?} $actions];
+				set actions_services [regexp -all -inline {(?:/.*/){1,1}?} $actions];
 				#Detecter tous les petterns de type { ?(nimporte)? }. Récupération condition sur variable:
-				set actions_scripts [regexp -all -inline {(?: \?.*\?){1,1}?} $actions];
+				set actions_scripts [regexp -all -inline {(?:\?.*\?){1,1}?} $actions];
 
 				#Traitement des services contenus dans actions:
 
@@ -400,7 +401,7 @@ namespace eval Generate_config {
 
 				if { [llength $actions_scripts]>0 } {
 					foreach req $actions_scripts {
-						set script [string trimright [string trimleft $req " ?"] "?"]
+						set script [string trimright [string trimleft $req "?"] "?"]
 						set transitions [join [list $transitions "associer_script_transition $transition {$script}; #Associer le script $script à l'action sur la transition $transition\n"] ""] 
 			
 					}
@@ -423,11 +424,17 @@ namespace eval Generate_config {
 
 
 		#-----------------------------------------------------------------Gestion d'erreur d'incoherence sur les requetes (si les requetes dans les actions sont les mêmes que les requetes dans les conditions ):
-
 		foreach req $requetes_conditions {
-			set t [lindex [regexp -inline {_t([0-9]{1,})} $req] 1]
-			if { [lsearch $requetes_actions [list [lindex $req 0] $t] ]== "-1" } {
-				puts "Config_ERROR:Incoherence dans les requettes des services. La requete [lindex $req 0] de la condition associée à la transition [lindex $req 1] n'est pas coherente avec les services déclarés dans les transitions"
+			set found 0;
+			set requete [lindex $req 0]
+			set t [lindex [regexp -inline {_t([0-9]{1,})} $requete ] 1]
+			foreach liste $requetes_actions {
+				if { [join $liste "_"] == $requete } {
+					set found 1;
+				}
+			}
+			if { !$found } {
+				puts "Config_ERROR:Incoherence dans les requettes des services. La requete [lindex $req 0] dans la condition associée à la transition [lindex $req 1] n'est pas coherente avec les services déclarés dans les  transitions"
 				Ecriture_Config $components $transitions $Script $ports $places; exit 1;				
 			}
 		
