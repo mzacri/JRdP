@@ -1,0 +1,42 @@
+a 130.0 20.0 n1 1 {Plan de navigation:}
+p 30.0 65.0 p0 1 n
+p 220.0 170.0 p1 0 n
+t 85.0 140.0 t0 c 0 w n {Conditions: ?1?; Actions: §init§;} ne
+t 125.0 515.0 t2 c 0 w n {Conditions: /demo_Monitor_t0 "done"/ ; Actions: §monitored§ ;} ne
+p 265.0 545.0 p3 0 n
+t 95.0 650.0 t3 c 0 w n {Conditions: /demo_Monitor_t2 "done"/ ; Actions: /demo SetSpeed ::demo::FAST/ ;} se
+p 125.0 770.0 p4 0 n
+p 940.0 840.0 p5 0 n
+t 910.0 275.0 t5 c 0 w n {Conditions: /demo_SetSpeed_t0 "error"/ OR /demo_GotoPosition_t0 "error"/ OR /demo_Monitor_t0 "error"/ ; Actions: ? set JRdP::Arret 1? ;} s
+p 280.0 400.0 p2 0 n
+a 1395.0 45.0 n5 1 {Configuration:}
+a 1395.0 90.0 n4 1 {Ports:\\n}
+a 1455.0 90.0 n2 1 {Components:\\ndemo}
+a 800.0 230.0 n9 1 {Gestion d'erreur débile}
+t 690.0 95.0 t1 c 0 w n {Conditions: /demo_SetSpeed_t0 "done"/ AND /demo_GotoPosition_t0 "sent"/ AND /demo_Monitor_t0 "sent"/ ; Actions: ;} n
+a 635.0 130.0 n7 1 {Plan nominal}
+a 1395.0 360.0 n0 1 {Fonctions:\\n\\ninit (\\n/demo SetSpeed ::demo::FAST/\\n/demo GotoPosition $pos/\\n/demo Monitor $monitor/ \\n)\\n\\nmonitored (\\n?set monitor [expr $monitor + 0.1]?\\n/demo SetSpeed ::demo::SLOW/\\n/demo Monitor $monitor/\\n)\\n}
+t 860.0 760.0 t7 c 0 w n {Conditions: /demo_GotoPosition_t0 "done"/ ; Actions: ? set JRdP::Arret 1? ;} ne
+t 910.0 690.0 t6 c 0 w n {Conditions: /demo_GotoPosition_t0 "done"/ ; Actions: ? set JRdP::Arret 1? ;} ne
+t 935.0 620.0 t4 c 0 w n {Conditions: /demo_GotoPosition_t0 "done"/ ; Actions: ? set JRdP::Arret 1? ;} ne
+a 875.0 540.0 n8 1 {Position atteinte}
+a 1395.0 165.0 n3 1 {Script TCL:\\n#Initialisation des variable:\\nset pos 1.1;\\nset monitor 0.6;\\n}
+e p4 0.04342009552 200.4120755 t7 0.5021652398 183.767006 1 n
+e p3 0.01947738409 188.4091293 t6 0.4648060715 165.274393 1 n
+e p2 0.006572911087 242.2065234 t4 0.4484276105 172.7398694 1 n
+e t7 0.9693307217 83.5463943 p5 0.3996684977 57.25491245 1 n
+e t6 0.9693307217 83.5463943 p5 0.3996684977 57.25491245 1 n
+e t5 0.9528032686 338.787544 p5 0.1897071201 221.7205448 1 n
+e p1 0.01994593194 128.0039062 t5 0.4142938764 89.69392399 1 n
+e t4 0.9693307217 83.5463943 p5 0.3996684977 57.25491245 1 n
+e t3 0.4763034291 60.67124523 p4 0.5084577181 94.1328848 1 n
+e p3 t3 1 n
+e t2 p3 1 n
+e p2 0.5349526736 143.4453293 t2 0.2500000005 70.0 1 n
+e t1 0.8328530129 86.45229899 p2 0.1108899782 63.89053138 1 n
+e p1 0.04537789691 75.55006618 t1 0.476822524 75.80237459 1 n
+e t0 p1 1 n
+e p0 t0 1 n
+h Source_Graphique
+
+

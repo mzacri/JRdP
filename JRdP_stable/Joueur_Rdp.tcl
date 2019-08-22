@@ -84,7 +84,6 @@ namespace eval JRdP {
 	set Arret 0;
 	#####LOGS:
                       
-	puts $f "******Conditions initials: $Flags";
 	puts $f "Nombre de transitions: $nb_t // Nombre de places: $nb_p"
 	puts $f "Boucle Joueur démarre:"
 	puts -nonewline $f "------Marquage Initial:  "; affiche_marquage $JRdP::f; 

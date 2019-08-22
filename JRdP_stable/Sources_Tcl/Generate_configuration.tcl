@@ -69,8 +69,8 @@ namespace eval Generate_config {
 						} elseif { $len == 3 } {
 							set transitions [join [list $transitions "sensibilise_transition_service $transition $id_request [lindex $request_splitted 1] [lindex $request_splitted 2]; # sensibilise partiellement transition $transition sur le status [lindex $request_splitted 1] de $id_request à l'exception \n"] ""] 
 						} else {
-							puts "Config_ERROR: Configuration de la condition sur le service $id_request de la transition $transition n'est pas valable ! \n"
-							Ecriture_Config $components $transitions $Script $ports $places; exit 1; 
+							puts "Config_ERROR: Configuration de la condition $id_request [lindex $request_splitted 1] [lindex $request_splitted 2] de la transition $transition n'est pas valable !. Essayez d'enlever les quotes/unquotes de \"status\" et autre.\n"
+							Ecriture_Config $components $transitions $script $ports $places; exit 1; 
 						}
 						#Substitition de /requete/ par id_request dans contenu: 
 						set conditions [regsub -all "$service" $conditions "\[lindex \$lst_temp($id_request) 0\]"];  #lst_temp sera défini dans Data.tcl/GENERATE_CONDITIONS_TOTALES 
@@ -105,7 +105,7 @@ namespace eval Generate_config {
 					} elseif { $len == 3 } {
 						set parametres [lindex $service 2];
 						set parametres [regsub {\$} $parametres {$Script::}]
-						set transitions [join [list $transitions "associer_service_transition $transition [lindex $service 0] [lindex $service 1] $parametres ; #Associer le service [lindex $service 1] du composant [lindex $service 0] à la transition $transition avec [lindex $service 2] comme paramètre\n"] ""]
+						set transitions [join [list $transitions "associer_service_transition $transition [lindex $service 0] [lindex $service 1] \{$parametres\} ; #Associer le service [lindex $service 1] du composant [lindex $service 0] à la transition $transition avec [lindex $service 2] comme paramètre\n"] ""]
 						lappend requetes_actions [list [lindex $service 0] [lindex $service 1] "t$transition"] 
 					} else {
 						puts "Config_ERROR: Configuration des actions de la transition $transition n'est pas valable ! \n"

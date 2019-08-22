@@ -129,11 +129,11 @@
 	
 			##corps:
 			set act [lindex $JRdP::Actions_transitions $transition]; 
-
 			set request  [join [list "$nom_composant" "_$nom_service" "_t$transition"] ""];
-			set commande [join [list "set " "::JRdP::$request" "  \[::$nom_composant" "::$nom_service -s $parametres &\] ;"] ""];
+			set ::JRdP::inst_$request 1;
+			set commande [join [list "incr ::JRdP::inst_$request;set " "::JRdP::$request" "  \[::$nom_composant" "::$nom_service -s $parametres &\] ;"] ""];
 
-			set commande [join [list $commande "set ::JRdP::Requests_status($request) \[list \"zero\" \"exception_vide\"\]" ] ";"]
+			set commande [join [list $commande "set ::JRdP::Requests_status($request) \[list \"zero\" \"exception_vide\" \]" ] ";"]
 				
 			lappend act $commande;
 			lset JRdP::Actions_transitions  $transition $act;
@@ -165,7 +165,7 @@
 		proc sensibilise_transition_service { transition id_req status {exception "default"} } {
 
 			array set l [lindex $JRdP::Flags $transition];
-			set l($id_req)  [list "0.0" "$status" "$exception" "req_vide"];
+			set l($id_req)  [list "0.0" "$status" "$exception" "0"];
 			lset JRdP::Flags $transition [array get l];
 	
 		}
@@ -255,7 +255,7 @@
 						if { $status == [lindex $lst 1] } { 
 				
 							lset lst 0 "1.0";
-							set req ::JRdP::$request
+							set req ::JRdP::inst_$request
 							#puts $JRdP::f "1// $req 4// $status 2//  [lindex $lst 3] 3// [expr $$req] " 
 							if { ( $status == "error" && [lindex $lst 2] != [dict get $exception ex] && [lindex $lst 2] != "default") || [expr $$req] == [lindex $lst 3] } {
 									lset lst 0 "0.0";
@@ -286,6 +286,7 @@
 			foreach {request lst} [array get ::JRdP::Requests_status] {
 
 				set req ::JRdP::$request
+				set hreq ::JRdP::inst_$request
 				if {  ![catch {set status [[expr $$req] status]} ex] } {	
 					set liste $::JRdP::Requests_status($request);
 					set old_status [lindex $liste 0] 
@@ -390,7 +391,7 @@
 						set flag [lindex $lst 0]
 						set status [lindex $lst 1]
 						if {$flag == 1 && $status != "sent" } { 
-							set req ::JRdP::$request
+							set req ::JRdP::inst_$request
 							lset lst 3 [expr $$req]; #sauvgarde de la dernière requête qui a validé le flag ( en dehors du status "sent" )
 							array set l [lindex $JRdP::Flags $t];
 							set l($request) $lst;

@@ -1,0 +1,18 @@
+---------- LOGS :::: Superviseur  
+::::: Deamon genomix démarré: genomix1 ::::: 
+::::: demo chargé sur genomix1 :::::
+------Marquage Initial:  { P0 :: 1.0  }
+
+Vecteur actions sur trs dans l'ordre des trs: {{namespace eval Script {eval {  set req  [demo::Goto -s 1.0 &] }}}} {{namespace eval Script {eval {  fonction  }}}} {} {{namespace eval Script {eval {  set Arret 1   }}}} {{namespace eval Script {eval {  set Arret 1 }}}}
+
+Nombre de transitions: 5 // Nombre de places: 5
+Boucle Joueur démarre:
+------Transition t0 tirée à 11:58:49
+------Evolution Marquage après 1 tour boucle :{ P1 :: 1.0  }
+------Transition t1 tirée à 11:58:49
+------Evolution Marquage après 45 tour boucle :{ P2 :: 1.0  }
+------Transition t2 tirée à 11:58:50
+------Evolution Marquage après 1246 tour boucle :{ P3 :: 1.0  }
+------Transition t3 tirée à 11:58:50
+------Evolution Marquage après 1 tour boucle :{ P4 :: 1.0  }
+***********************FIN************************

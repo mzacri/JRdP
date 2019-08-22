@@ -1,0 +1,18 @@
+a 815.0 20.0 n5 1 {Configuration:}
+a 815.0 65.0 n4 1 {Ports:\\n}
+p 35.0 145.0 p0 1 n
+t 45.0 235.0 t0 c 0 w n {    Conditions: ?1?;Actions: /rien GetSpeed/ et ?set timer [clock seconds]? ; } ne
+p 35.0 340.0 p1 0 n
+t 45.0 465.0 t1 c 0 w n {Conditions: /rien_GetSpeed_t0 "done"/  AND ?[JRdP::TIMER timer 10]? ; Actions: ?set JRdP::Arret 1?;} ne
+p 35.0 585.0 p2 0 n
+a 815.0 105.0 n2 1 {Components:\\ndemo as rien}
+a 20.0 35.0 n1 1 {Plan de navigation:}
+a 815.0 145.0 n0 1 {Fonctions:\\n}
+a 815.0 170.0 n3 1 {Script TCL:}
+e t1 p2 1 n
+e p1 t1 1 n
+e t0 p1 1 n
+e p0 t0 1 n
+h Source_Graphique
+
+
