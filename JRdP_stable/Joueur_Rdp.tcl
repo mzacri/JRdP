@@ -99,14 +99,15 @@ namespace eval JRdP {
 		###Actualisation des états des Requetes selon l'état des services // Équivalent acquisition des entrées:
 		
 		ACTUALISATION_REQUESTS;
-
-		###Actualisation des flags selon l'état des requetes // Équivalent acquisition des entrées:
-
-		ACTUALISATION_FLAGS ;
-
+		
 		#Recherche des transitions sensibilsees:
 	
 		TRANSITIONS_SENSIBILISEES;  
+
+		###Actualisation des flags selon l'état des requetes associées aux transitions sensibilisées// Équivalent acquisition des entrées:
+
+		ACTUALISATION_FLAGS ;
+
 
 		#Générer les conditions des transitions sensibilisees à partir des flags:
 

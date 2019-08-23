@@ -242,37 +242,39 @@
 		proc ACTUALISATION_FLAGS {} {
 
 			for { set t 0 } { $t < $JRdP::nb_t } { incr t } {
-
-				foreach {request lst}  [lindex $JRdP::Flags $t] { 
+				#Pour les transitions sensibilisées:
+				if [lindex $JRdP::Transitions_sensibilisees $t] {
+	
+					foreach {request lst}  [lindex $JRdP::Flags $t] { 
 					
-					if {[info exists ::JRdP::Requests_status($request)] } {
+						if {[info exists ::JRdP::Requests_status($request)] } {
 
-						set liste $::JRdP::Requests_status($request);
-						set status [lindex $liste 0]
-						set exception [lindex $liste 1]
-
-						#Mise à jour de la valeur du Flag:
-						if { $status == [lindex $lst 1] } { 
+							set liste $::JRdP::Requests_status($request);
+							set status [lindex $liste 0]
+							set exception [lindex $liste 1]
+							set req ::JRdP::inst_$request 
+							#Mise à jour de la valeur du Flag:
+							if { $status == [lindex $lst 1] } { 
 				
-							lset lst 0 "1.0";
-							set req ::JRdP::inst_$request
-							#puts $JRdP::f "1// $req 4// $status 2//  [lindex $lst 3] 3// [expr $$req] " 
-							if { ( $status == "error" && [lindex $lst 2] != [dict get $exception ex] && [lindex $lst 2] != "default") || [expr $$req] == [lindex $lst 3] } {
-									lset lst 0 "0.0";
-							} 
+								lset lst 0 "1.0";
+								#Remise à 0 si: 
+								if { ( $status == "error" && [lindex $lst 2] != [dict get $exception ex] && [lindex $lst 2] != "default") || [expr $$req] == [lindex $lst 3] } {
+										lset lst 0 "0.0";
+								} 
 						
 	
-						} else {
-							lset lst 0 "0.0";
+							} else {
+								lset lst 0 "0.0";
+							}
+
+
+							array set l [lindex $JRdP::Flags $t];
+							set l($request) $lst;
+							lset JRdP::Flags $t [array get l];
+							array unset l;
 						}
 
-
-						array set l [lindex $JRdP::Flags $t];
-						set l($request) $lst;
-						lset JRdP::Flags $t [array get l];
-						array unset l;
 					}
-
 				}	
 			}
 
@@ -286,8 +288,8 @@
 			foreach {request lst} [array get ::JRdP::Requests_status] {
 
 				set req ::JRdP::$request
-				set hreq ::JRdP::inst_$request
-				if {  ![catch {set status [[expr $$req] status]} ex] } {	
+				if {  [info exists $req] } {	
+					set status [[expr $$req] status]
 					set liste $::JRdP::Requests_status($request);
 					set old_status [lindex $liste 0] 
 					if { $old_status != $status } {
@@ -302,6 +304,10 @@
 							lset lst 1 $excep
 							puts $JRdP::f "Error $request details: $excep";
 							puts  "Error $request details: $excep";
+							unset $req
+						} elseif { $status == "done" } {
+							unset $req
+
 						}
 
 						set ::JRdP::Requests_status($request) $lst;
@@ -337,8 +343,6 @@
 			}
 			
 			
-		 
-
 		}
 
 	
@@ -348,7 +352,7 @@
 		proc GENERATE_CONDITIONS { } {
 			for {set t 0} {$t<$JRdP::nb_t} { incr t } {
 				#On génére les conditions des transitions sensibilisées
-				if { [lindex $JRdP::Transitions_sensibilisees $t] == 1.0 } {
+				if [lindex $JRdP::Transitions_sensibilisees $t] {
 					set cond "0.0";
 					array set Script::lst_temp [lindex $JRdP::Flags $t];
 					set exprn [lindex $JRdP::Flags_cond $t]  
@@ -405,7 +409,6 @@
 					puts  "------Evolution Marquage après $JRdP::cr tour boucle :";affiche_marquage;# Logs <--Marquage	
 					set JRdP::cr 0;
 
-				
 					
 				}	
 		
