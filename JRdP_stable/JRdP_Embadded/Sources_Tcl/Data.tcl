@@ -133,7 +133,7 @@
 			set ::JRdP::inst_$request 1;
 			set commande [join [list "incr ::JRdP::inst_$request;set " "::JRdP::$request" "  \[::$nom_composant" "::$nom_service -s $parametres &\] ;"] ""];
 
-			set commande [join [list $commande "set ::JRdP::Requests_status($request) \[list \"zero\" \"exception_vide\" \]" ] ";"]
+			set commande [join [list $commande "set ::JRdP::Requests_status($request) \[list \"zero\" \"result\" \]" ] ";"]
 				
 			lappend act $commande;
 			lset JRdP::Actions_transitions  $transition $act;
@@ -162,10 +162,10 @@
 	#6----fonction association d'un Flag de transition à une Requête de service: 
 
 
-		proc sensibilise_transition_service { transition id_req status {exception "default"} } {
+		proc sensibilise_transition_service { transition id_req status {result "default"} } {
 
 			array set l [lindex $JRdP::Flags $transition];
-			set l($id_req)  [list "0.0" "$status" "$exception" "0"];
+			set l($id_req)  [list "0.0" "$status" "$result" "0"];
 			lset JRdP::Flags $transition [array get l];
 	
 		}
@@ -260,8 +260,7 @@
 								#Remise à 0 si: 
 								if { ( $status == "error" && [lindex $lst 2] != [dict get $exception ex] && [lindex $lst 2] != "default") || [expr $$req] == [lindex $lst 3] } {
 										lset lst 0 "0.0";
-								} 
-						
+								}
 	
 							} else {
 								lset lst 0 "0.0";
@@ -306,6 +305,10 @@
 							puts  "Error $request details: $excep";
 							unset $req
 						} elseif { $status == "done" } {
+							set result [[expr $$req] result];
+							lset lst 1 $result
+							puts $JRdP::f "Result $request : $result";
+							puts  "Result $request : $result";
 							unset $req
 
 						}
@@ -321,8 +324,17 @@
 
 
 
+
 		}
 
+	#13----fonction récupération du résultat d'une requête:
+	
+	proc result_req { request } {
+		
+		set liste $::JRdP::Requests_status($request);
+		set result [lindex $liste 1]
+		return $result
+	}
 
 	#14---fonction tirage transitions:
 
@@ -343,6 +355,8 @@
 			}
 			
 			
+
+
 		}
 
 	
