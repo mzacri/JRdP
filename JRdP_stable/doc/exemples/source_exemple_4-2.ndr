@@ -20,7 +20,7 @@ t 860.0 760.0 t7 c 0 w n {Conditions: /demo_GotoPosition_t0 "done"/ ; Actions: ?
 t 910.0 690.0 t6 c 0 w n {Conditions: /demo_GotoPosition_t0 "done"/ ; Actions: ? set JRdP::Arret 1? ;} ne
 t 935.0 620.0 t4 c 0 w n {Conditions: /demo_GotoPosition_t0 "done"/ ; Actions: ? set JRdP::Arret 1? ;} ne
 a 875.0 540.0 n8 1 {Position atteinte}
-a 1395.0 165.0 n3 1 {Script TCL:\\n#Initialisation des variable:\\nset pos 1.1;\\nset monitor 0.6;\\n}
+a 1395.0 165.0 n3 1 {Script TCL:\\n#Initialisation des variable:\\nset pos 0.9;\\nset monitor 0.6;\\n}
 e p4 0.04342009552 200.4120755 t7 0.5021652398 183.767006 1 n
 e p3 0.01947738409 188.4091293 t6 0.4648060715 165.274393 1 n
 e p2 0.006572911087 242.2065234 t4 0.4484276105 172.7398694 1 n

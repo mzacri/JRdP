@@ -1,7 +1,21 @@
+#© 2019 CNRS-LAAS
+
+#Author: M’Barek Zacri
+
+#Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+#1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+
+#2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+
 
 #Ouverture du buffers:
 puts "REPORT:Configuration encours ..."
-set fd [open "Source_Graphique.ndr" r]	
+set fd [open "source.ndr" r]	
 set components "";
 namespace eval Script {
 	set Config_places "";
@@ -62,7 +76,7 @@ while {[gets $fd line] >= 0} {
 			unset ligne;
 		}
 	#Si la ligne commence par n. Récupération de la config Ports,Script TCL ou Components.
-	} elseif { [string index $line 0]== "n" } {
+	} elseif { [string index $line 0]== "n" || [string index $line 0]== "a" } {
 		regexp " \{.*\}" $line ligne
 		if { [info exists ligne] } {
 			set ligne [string trimright [string trimleft $ligne " {"] "}"];
@@ -71,13 +85,13 @@ while {[gets $fd line] >= 0} {
 			set ligne [split $ligne "°"]
 			#Enlever les lignes vides
 			set ligne [lsearch -all -inline -not -exact $ligne {}]
-			regexp {n .* [10] \{} $line note
+			regexp {[na] .* [10] \{} $line note
 			#numéro de la note
 			set note [string trimleft [lindex [split $note " "] 3] "n"]
 			#Ajout Script TCL
 			if { [string match -nocase "*Script TCL*" [lindex $ligne 0]] } {			
 				set ligne [lrange $ligne 1 end]
-				#Tout la note du script, sauf la première ligne: Script TCL, est mise dans fichier Configuration_RdP:
+				#Tout la note du script, sauf la première ligne: Script TCL, est déclaré:
 				namespace eval Script {
 					foreach element $ligne {
 						eval "$element"	
