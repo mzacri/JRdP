@@ -10,46 +10,47 @@
 
 #THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
-
-
-
+if { $argc != 1 } {
+    puts "Invalid syntax. Usage:"
+    puts "$argv0 <ndr_input_file>"
+    exit 2
+}
 
 namespace eval Generate_config {
-	puts "Voulez vous générer la configuration du RdP à partir le fichier source.ndr? (1 ou 0):"
-	set gen [gets stdin];
 
+  set ndr_file [lindex $argv 0]
+	puts "Générer la configuration du RdP à partir le fichier $ndr_file ? (1 ou 0):"
+	set gen [gets stdin];
 
 	#I----Encapsulation de code ( contexte d'appel important ):
 
-		#Ecriture dans le buffer Config ( Congiguration_RdP ) :
+		# Ecriture dans le buffer Config ( Congiguration_RdP ) :
 
-		proc Ecriture_Config { components transitions Script ports places } { 
+		proc Ecriture_Config { components transitions Script ports places } {
 			puts $JRdP::Generate_config::Config "##### I- Chargement des composants \n\nset handle \[genomix\]; #Lancement deomon genomix , roscore et serveur genomix à l'aide du macro genomix\nset components { $components };  	#Modifiable		#Composant .s à charger\nLoad_components \$handle \$components ; #Chargement des composants (components) sur le deamon genomix (handle)\n\n##### II- Connection des capteurs:\n#---syntax: Connect_port \$port_name \$component1(port in) \$component2(port out)\n\n$ports \n\n##### III- Script_TCL :\n\nnamespace eval Script {\n\t$Script\n\n}\n\n##### V- Structure dynamique du RdP ( association transition service conditions ) :\n\n$transitions \n\n#### VI- actions sur les places:\n\n proc ACTIONS_PLACES {} { \n\tglobal f;\n\tglobal Arret;\n\t$places\n}\n"
 			puts $JRdP::Generate_config::Config "###À ne pas modifier:\nset Flags_cond [list $JRdP::Flags_cond]\nset requetes_actions [list $JRdP::Generate_config::requetes_actions]\n"
 		}
 
 		#Traitement des scripts contenu dans les conditions:
 
-
-		proc Traitement_script_dans_conditions { transition scripts conditions components transitions script ports places } { 	
+		proc Traitement_script_dans_conditions { transition scripts conditions components transitions script ports places } {
 
 			if { [llength $scripts]>0 } {
 				set flag_conditions_script 1;
 				#Pour chaque formule dans scripts
 				foreach script_untrimmed $scripts {
-					set script [string trimright [string trimleft $script_untrimmed "?"] "?"] 
+					set script [string trimright [string trimleft $script_untrimmed "?"] "?"]
 					if { [regexp -nocase {[a-z0-9]} $conditions] } {
 						#Ajout de la fonction nécessaire dans la variable transitions:
-						set transitions [join [list $transitions "\t# sensibilise partiellement la transition $transition sur la formule $script \n"] ""] 	
+						set transitions [join [list $transitions "\t# sensibilise partiellement la transition $transition sur la formule $script \n"] ""]
 						#Substitition de script_untrimmed par script trimmed dans conditions:
-						set conditions [regsub "***=$script_untrimmed" $conditions " $script "];	
+						set conditions [regsub "***=$script_untrimmed" $conditions " $script "];
 
 					} else {
 						puts "Config_ERROR: Configuration de la condition sur la variable $id_var de la transition $transition n'est pas valable ! \n"
 						Ecriture_Config $components $transitions $script $ports $places; exit 1;
 					}
-	
+
 
 				}
 
@@ -59,9 +60,9 @@ namespace eval Generate_config {
 		}
 
 
-		#Traitement des services contenu dans les conditions:
+		# Traitement des services contenu dans les conditions:
 
-		proc Traitement_services_dans_conditions { transition services conditions components transitions script ports places requetes_conditions } { 
+		proc Traitement_services_dans_conditions { transition services conditions components transitions script ports places requetes_conditions } {
 
 			if { [llength $services]>0 } {
 				#Variables:
@@ -79,18 +80,18 @@ namespace eval Generate_config {
 						#variable ERROR Incoherence
 						lappend requetes_conditions $id_request_transition
 						set len [llength $request_splitted]
-						#Detection basique d'erreur de configuration avec la taille len 
+						#Detection basique d'erreur de configuration avec la taille len
 						if { $len == 2 } {
 							#Ajout de la fonction nécessaire dans la variable transitions:
-							set transitions [join [list $transitions "sensibilise_transition_service $transition $id_request [lindex $request_splitted 1]; # sensibilise partiellement transition $transition sur le status [lindex $request_splitted 1] de $id_request \n"] ""] 					
+							set transitions [join [list $transitions "sensibilise_transition_service $transition $id_request [lindex $request_splitted 1]; # sensibilise partiellement transition $transition sur le status [lindex $request_splitted 1] de $id_request \n"] ""]
 						} elseif { $len == 3 } {
-							set transitions [join [list $transitions "sensibilise_transition_service $transition $id_request [lindex $request_splitted 1] [lindex $request_splitted 2]; # sensibilise partiellement transition $transition sur le status [lindex $request_splitted 1] de $id_request à l'exception \n"] ""] 
+							set transitions [join [list $transitions "sensibilise_transition_service $transition $id_request [lindex $request_splitted 1] [lindex $request_splitted 2]; # sensibilise partiellement transition $transition sur le status [lindex $request_splitted 1] de $id_request à l'exception \n"] ""]
 						} else {
 							puts "Config_ERROR: Configuration de la condition $id_request [lindex $request_splitted 1] [lindex $request_splitted 2] de la transition $transition n'est pas valable !. Essayez d'enlever les quotes/unquotes de \"status\" et autre.\n"
-							Ecriture_Config $components $transitions $script $ports $places; exit 1; 
+							Ecriture_Config $components $transitions $script $ports $places; exit 1;
 						}
-						#Substitition de /requete/ par id_request dans contenu: 
-						set conditions [regsub -all "$service" $conditions "\[lindex \$lst_temp($id_request) 0\]"];  #lst_temp sera défini dans Data.tcl/GENERATE_CONDITIONS_TOTALES 
+						#Substitition de /requete/ par id_request dans contenu:
+						set conditions [regsub -all "$service" $conditions "\[lindex \$lst_temp($id_request) 0\]"];  #lst_temp sera défini dans Data.tcl/GENERATE_CONDITIONS_TOTALES
 
 					} else {
 						puts "Config_ERROR: Transitions $transition: Cette version de JRdP ne permet pas d'avoir la même requête $id_request avec différents statuts ( ou exceptions ) comme condition sur la même transition. Merci de faire autrement !! \n"
@@ -98,7 +99,7 @@ namespace eval Generate_config {
 
 					}
 				}
-		
+
 			} else {
 			}
 			return [list $conditions $transitions $requetes_conditions]
@@ -106,7 +107,7 @@ namespace eval Generate_config {
 
 		#Traitement des services contenu dans les actions:
 
-		proc Traitement_services_dans_actions { transition services components transitions script ports places requetes_actions } { 
+		proc Traitement_services_dans_actions { transition services components transitions script ports places requetes_actions } {
 
 			if { [llength $services]>0 } {
 				foreach service $services {
@@ -117,17 +118,17 @@ namespace eval Generate_config {
 					set len [llength $service]
 
 					if { $len == 2 } {
-						set transitions [join [list $transitions "associer_service_transition $transition [lindex $service 0] [lindex $service 1] ; #Associer le service [lindex $service 1] du composant [lindex $service 0] à la transition $transition\n"] ""] 
+						set transitions [join [list $transitions "associer_service_transition $transition [lindex $service 0] [lindex $service 1] ; #Associer le service [lindex $service 1] du composant [lindex $service 0] à la transition $transition\n"] ""]
 						lappend requetes_actions [list [lindex $service 0] [lindex $service 1] "t$transition"]
 					} elseif { $len == 3 } {
 						set parametres [lindex $service 2];
 						set parametres [regsub {\$} $parametres {$Script::}]
 						set transitions [join [list $transitions "associer_service_transition $transition [lindex $service 0] [lindex $service 1] \{$parametres\} ; #Associer le service [lindex $service 1] du composant [lindex $service 0] à la transition $transition avec [lindex $service 2] comme paramètre\n"] ""]
-						lappend requetes_actions [list [lindex $service 0] [lindex $service 1] "t$transition"] 
+						lappend requetes_actions [list [lindex $service 0] [lindex $service 1] "t$transition"]
 					} else {
 						puts "Config_ERROR: Configuration des actions de la transition $transition n'est pas valable ! \n"
 						Ecriture_Config $components $transitions $script $ports $places; exit 1;
-					}	
+					}
 
 				}
 			}
@@ -142,17 +143,17 @@ namespace eval Generate_config {
 		#1****Ouverture du buffers:
 
 		puts "REPORT:Génération $JRdP::path/Generated_Tcl/Configuration_RdP.tcl encours ..."
-		set fd [open "source.ndr" r]	
+		set fd [open $ndr_file r]
 		set Config [open "Generated_Tcl/Configuration_RdP.tcl" w+]
 
 		#2***Variables à mettre dans Configuration_Rdp.tcl:
 
-		set components "";#Contenant les composants à charger. 
+		set components "";#Contenant les composants à charger.
 		set transitions ""; #Contenant la configuration des transitions.
 		set Script "";  #Contenant le Script TCL.
 		set ports "";  #Contenant la configuration des ports.
 		set places "";  #Contenant la configuration des places.
-		
+
 		#3***Variables internes:
 		set requetes_conditions "";
 		set requetes_actions "";
@@ -164,7 +165,7 @@ namespace eval Generate_config {
 		while {[gets $fd line] >= 0} {
 
 
-			#----------------------------------Si la ligne commence par t. Récupération de la config transition. 
+			#----------------------------------Si la ligne commence par t. Récupération de la config transition.
 
 			#Exemple:t 35.0 510.0 t2 c 0 w n {Conditions: /demo_Move_t1 "not-sent"/ ; Services: demo Goto 5.0;} ne. Cf .ndr
 
@@ -175,7 +176,7 @@ namespace eval Generate_config {
 				#Si on detecte un pettern de type {t (nimporte) (c ou w ou s ou n) }. Récupération numéro de transition:
 				regexp {t .* [cwesn] } $line transition
 				set transition [string trimleft [lindex [split $transition " "] 3] "t"]
-				#Ajout "#transition num_transition" dans la variable transitions: 
+				#Ajout "#transition num_transition" dans la variable transitions:
 				set transitions [ join [list $transitions "\n\n#transition $transition \n\n"] ""]
 				#Si on detecte un pettern de type { {Conditions:nimporte; Actions:.*;} }:
 				regexp { {([\s]{0,}Conditions:.*;[\s]{0,}Actions:.*;)[\s]{0,}} } $line tout ligne
@@ -185,7 +186,7 @@ namespace eval Generate_config {
 
 					#Récupération des conditions et des actions:
 					regexp {Conditions:(.*);[\s]{0,}Actions:.*;} $ligne tous conditions
-					regexp {Conditions:.*;[\s]{0,}Actions:(.*);} $ligne tous actions 
+					regexp {Conditions:.*;[\s]{0,}Actions:(.*);} $ligne tous actions
 
 
 					if { [regexp -nocase {[a-z\?\!]} $conditions] } {
@@ -213,20 +214,20 @@ namespace eval Generate_config {
 
 						#Gestion d'erreur débile:
 
-						if { [llength $conditions_scripts] == 0 && [llength $conditions_services] == 0 }  { 
+						if { [llength $conditions_scripts] == 0 && [llength $conditions_services] == 0 }  {
 							puts "Config_ERROR: Conditions non valables sur la transition $transition. "
 							Ecriture_Config $components $transitions $Script $ports $places; exit 1;
 						}
 
-						#Substitition de OR par || dans conditions: 
+						#Substitition de OR par || dans conditions:
 						set conditions [regsub -all "OR" $conditions {||}]
 						#Substitition de AND par && dans conditions:
 						set conditions [regsub -all "AND" $conditions {\&\&}]
 						#Ajout de la formule logique qui sera testé sur chaque tour de boucle du JrdP
 						lset JRdP::Flags_cond $transition "namespace eval Script \{ expr $conditions \}"
-					
-				
-					} else { 
+
+
+					} else {
 						puts "Config_ERROR: Pas de conditions sur la transition $transition. "
 						Ecriture_Config $components $transitions $Script $ports $places; exit 1;
 					}
@@ -246,42 +247,42 @@ namespace eval Generate_config {
 						set resultat [Traitement_services_dans_actions $transition $actions_services  $components $transitions $Script $ports $places $requetes_actions];
 						set transitions [lindex $resultat 1]
 						set requetes_actions  [lindex $resultat 0]
-						
+
 						#Traitement des scripts contenus dans actions:
 
 						if { [llength $actions_scripts]>0 } {
 							foreach script $actions_scripts {
 								set script [string trimright [string trimleft $script "?"] "?"]
-								set transitions [join [list $transitions "associer_script_transition $transition \{$script\}; #Associer le script $script à l'action sur la transition $transition\n"] ""] 
-					
+								set transitions [join [list $transitions "associer_script_transition $transition \{$script\}; #Associer le script $script à l'action sur la transition $transition\n"] ""]
+
 							}
 						}
-						
+
 						#Traitement des fonctions contenus dans actions (reporté puisque la note qui contient la definitions des notes peut être pas encore traitée):
 
 						if { [llength $actions_fonctions]>0 } {
 							foreach fonction $actions_fonctions {
 								set fonction [string trimright [string trimleft $fonction "§"] "§"]
 								lappend config_fonctions [list "temp_$fonction" $transition]
-							} 
+							}
 						}
 
 						#Gestion d'erreur débile 2:
 
-						if { [llength $actions_services]==0 && [llength $actions_scripts]==0 && [llength $actions_fonctions]==0 } { 
+						if { [llength $actions_services]==0 && [llength $actions_scripts]==0 && [llength $actions_fonctions]==0 } {
 							puts "Config_ERROR: Transition $transition : actions non valables "
-							Ecriture_Config $components $transitions $Script $ports $places; exit 1; 
-						
+							Ecriture_Config $components $transitions $Script $ports $places; exit 1;
+
 						}
 					}
 
-				unset ligne  
-		 
+				unset ligne
+
 				} else {
 					puts "Config_ERROR: Transition $transition : \n La formule de configuration est la suivante:\nConditions:lesconditions; Actions:lesactions;"
-					Ecriture_Config $components $transitions $Script $ports $places; exit 1; 
+					Ecriture_Config $components $transitions $Script $ports $places; exit 1;
 				}
-			
+
 
 
 
@@ -301,7 +302,7 @@ namespace eval Generate_config {
 					set place [string trimleft [lindex [split $place " "] 3] "p"]
 					set places [ join [list $places "\n\n \t#place $place \n\n"] ""]
 					set places [ join [list $places "\t\tif \{ \[marquage_place $place\] \} \{ \n\t\t\t$ligne\n\t\t \}"] ""]
-					set report_config [join [list $report_config "\nPlace : $place configurée"]] 
+					set report_config [join [list $report_config "\nPlace : $place configurée"]]
 					unset ligne;
 				}
 
@@ -325,11 +326,11 @@ namespace eval Generate_config {
 
 					#Ajout Script TCL
 
-					if { [string match -nocase "*Script TCL*" [lindex $ligne 0]] } {			
+					if { [string match -nocase "*Script TCL*" [lindex $ligne 0]] } {
 						set ligne [lrange $ligne 1 end]
 						#Tout la note du script, sauf la première ligne: Script TCL, est mise dans fichier Configuration_RdP:
-						set Script [ join $ligne "\n\t" ]	
-						set report_config [join [list $report_config "\nScript TCL: configurés"]] 
+						set Script [ join $ligne "\n\t" ]
+						set report_config [join [list $report_config "\nScript TCL: configurés"]]
 
 					#Configuration Ports:
 
@@ -337,7 +338,7 @@ namespace eval Generate_config {
 						set ligne [lrange $ligne 1 end]
 						foreach element $ligne {
 							if { ![regexp {#} $element] } {
-								if { [regexp { \-\> } $element] } { 
+								if { [regexp { \-\> } $element] } {
 									set modules [split $element " \-\> "]
 									set modules [lsearch -all -inline -not -exact $modules {}]
 									set module1 [lindex $modules 0]
@@ -349,7 +350,7 @@ namespace eval Generate_config {
 									set ports [ join [list $ports "Connect_port $module2_port $module2_comp $module1_port $module1_comp"] "\n"]
 								}
 							}
-								
+
 						}
 						set report_config "$report_config\nPorts: configurés"
 
@@ -359,13 +360,13 @@ namespace eval Generate_config {
 						set ligne [lrange $ligne 1 end]
 						foreach element $ligne {
 							if { ![regexp {#} $element] } {
-								regexp {(.*) as (.*)} $element tout component instance_component 
-								if [info exists component] { 
+								regexp {(.*) as (.*)} $element tout component instance_component
+								if [info exists component] {
 									set components [join [list $components "$component" "$instance_component" ] " "]
-									unset component 
+									unset component
 								} else {
-									set components [join [list $components [lindex $element 0] [lindex $element 0] ] " "] 
-								}	
+									set components [join [list $components [lindex $element 0] [lindex $element 0] ] " "]
+								}
 							}
 						}
 						set report_config "$report_config\nComponents: configurés"
@@ -397,7 +398,7 @@ namespace eval Generate_config {
 
 				set transition [lindex $fonction 1]
 
-				#Ajout "#transition num_transition" dans la variable transitions: 
+				#Ajout "#transition num_transition" dans la variable transitions:
 				set transitions [ join [list $transitions "\n\n#transition $transition (Config à partir des fonctions) \n\n"] ""]
 
 				set actions [lindex $fonction 0]
@@ -413,24 +414,24 @@ namespace eval Generate_config {
 				set resultat [Traitement_services_dans_actions $transition $actions_services $components $transitions $Script $ports $places $requetes_actions];
 				set transitions [lindex $resultat 1]
 				set requetes_actions  [lindex $resultat 0]
-				
+
 				#Traitement des scripts contenus dans actions:
 
 				if { [llength $actions_scripts]>0 } {
 					foreach req $actions_scripts {
 						set script [string trimright [string trimleft $req "?"] "?"]
-						set transitions [join [list $transitions "associer_script_transition $transition {$script}; #Associer le script $script à l'action sur la transition $transition\n"] ""] 
-			
+						set transitions [join [list $transitions "associer_script_transition $transition {$script}; #Associer le script $script à l'action sur la transition $transition\n"] ""]
+
 					}
 				}
 
 				#Traitement des erreurs:
 
-				if { [llength $actions_scripts]==0 && [llength $actions_services]==0} { 
+				if { [llength $actions_scripts]==0 && [llength $actions_services]==0} {
 							puts "Config_ERROR: Transition $transition : actions de la fonction [string trimleft $contenu {temp_}] non valables "
-							Ecriture_Config $components $transitions $Script $ports $places; exit 1; 
-						
-				}	
+							Ecriture_Config $components $transitions $Script $ports $places; exit 1;
+
+				}
 			}
 		}
 
@@ -452,12 +453,12 @@ namespace eval Generate_config {
 			}
 			if { !$found } {
 				puts "Config_ERROR:Incoherence dans les requettes des services. La requete [lindex $req 0] dans la condition associée à la transition [lindex $req 1] n'est pas coherente avec les services déclarés dans les  transitions"
-				Ecriture_Config $components $transitions $Script $ports $places; exit 1;				
+				Ecriture_Config $components $transitions $Script $ports $places; exit 1;
 			}
-		
+
 		}
 
-		set report_config [join [list $report_config "\nTransitions: configurés"]] 
+		set report_config [join [list $report_config "\nTransitions: configurés"]]
 		puts  $report_config
 
 		#Écriture dans Configuration_RdP.tcl:
@@ -478,4 +479,3 @@ namespace eval Generate_config {
 		exec cp $JRdP::path/Generated_Tcl/Configuration_RdP.tcl $JRdP::path/JRdP_Embadded/Generated_Tcl/Configuration_RdP.tcl
 	}
 }
-

@@ -10,52 +10,60 @@
 
 #THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
-
+if { $argc != 1 } {
+    puts "Invalid syntax. Usage:"
+    puts "$argv0 <ndr_input_file>"
+    exit 2
+}
 
 namespace eval Generate_matrice {
-	puts "Voulez vous générer la définition du RdP à partir du source.ndr? (1 ou 0):"
+
+  set ndr_file [lindex $argv 0]
+	puts "Générer la définition du RdP à partir du $ndr_file ? (1 ou 0):"
 	set gen [gets stdin];
 
 	if { $gen } {
 		#Ouverture du buffers:
 		puts "REPORT:Génération $JRdP::path/Generated_Tcl/Matrices.tcl encours ..."
-		set fd [open "source.ndr" r]	
+    set fd [open $ndr_file r]
 		set mat [open "Generated_Tcl/Matrices.tcl" w+]
 		#Variables:
 		set nb_t 0;#nombre de transitions.
 		set nb_p 0;#nombre de places.
-		set pre ""; #liste contenant des arcs pre  ( arc=liste: "place transition poids" ). Utilisé ensuite pour générer la matrice PRE. 
+		set pre ""; #liste contenant des arcs pre  ( arc=liste: "place transition poids" ). Utilisé ensuite pour générer la matrice PRE.
 		set post "";#liste contenant des arcs post ( arc=liste: "place transition poids" ). Utilisé ensuite pour générer la matrice POST.
-		set mar "";#liste contenant les marquages initials des places ( marquag=liste: "place marquage" ). 
+		set mar "";#liste contenant les marquages initials des places ( marquag=liste: "place marquage" ).
 		#Lecture ligne par ligne du fichier .ndr:
 		#Dans la detection des patterns, les espaces sont considérés.
 		while {[gets $fd line] >= 0} {
 			#Si la ligne commence par e. Récupération des arcs.Exemple:e p5 0.8573883569 108.853112 t5 0.009084688674 35.05709629 1 n. Cf .ndr
 			if { [string index $line 0]== "e" } {
-				#Si on detecte un pettern pre de type {p(chiffres==place) (nimporte)t(chiffres==transition) (nimporte)(chiffres==poids) n} 
+				#Si on detecte un pettern pre de type {p(chiffres==place) (nimporte)t(chiffres==transition) (nimporte)(chiffres==poids) n}
 				if { [regexp  { p([0-9]{1,}) .*t([0-9]{1,}) .*([0-9]{1,}) n} $line tout place transition poids] } {
-					#Calcul (nb_t-1) : max des transitions: 
+					#Calcul (nb_t-1) : max des transitions:
 					if { $nb_t < $transition } { set nb_t $transition }
 					#Calcul (nb_p-1) : max des places:
 					if { $nb_p < $place } { set nb_p $place }
-					#Ajout d'un arc: 
+					#Ajout d'un arc:
 					lappend pre [list "$place" "$transition" "$poids"]
-				
-				#Si on detecte un pettern post de type {t(chiffres==transition) (nimporte)p(chiffres==place) (nimporte)(chiffres==poids) n}		
+
+				#Si on detecte un pettern post de type {t(chiffres==transition) (nimporte)p(chiffres==place) (nimporte)(chiffres==poids) n}
 				} elseif { [regexp  { t([0-9]{1,}) .*p([0-9]{1,}) .*([0-9]{1,}) n} $line tout transition place poids]	} {
 					if { $nb_t < $transition } { set nb_t $transition }
 					if { $nb_p < $place } { set nb_p $place }
 					lappend post [list "$place" "$transition" "$poids"]
-				#Sinon : ERROR	
-				} else { puts "configuration \{ $line \} dans source.ndr n'est pas valide"; exit 1; }
-			#Si la ligne commence par p. Récupération du marquage: 
+				#Sinon : ERROR
+				} else {
+          puts "configuration \{ $line \} dans $ndr_file n'est pas valide";
+          exit 1; 
+        }
+			#Si la ligne commence par p. Récupération du marquage:
 			} elseif { [string index $line 0]== "p" } {
 				#Si on detecte un pettern de type {p(chiffres==place) (chiffres==marquage) n}
 				if { [regexp { p([0-9]{1,}) ([0-9]{1,}) n} $line tout place marquage] } {
 					#Ajout marquage:
-					lappend mar [list "$place" "$marquage"] 
-				}		
+					lappend mar [list "$place" "$marquage"]
+				}
 			}
 		}
 		#nb_t est le nombre de transitions indexées à partir de 0. Il faut ajouter 1:
@@ -75,7 +83,7 @@ namespace eval Generate_matrice {
 		set len_post [llength $post]
 		set len_mar [llength $mar]
 		if { $len_pre < $nb_t && $len_post < $nb_t } {
-			puts "\n\n!!!!!!!!!!Important: Transitions non utilisées detectées. Toute transition non utilisée ( sans place pre et post ) ne fait qu'alourdir le calcul de la boucle du JRdP.\n\n" 
+			puts "\n\n!!!!!!!!!!Important: Transitions non utilisées detectées. Toute transition non utilisée ( sans place pre et post ) ne fait qu'alourdir le calcul de la boucle du JRdP.\n\n"
 
 
 		}
@@ -87,7 +95,7 @@ namespace eval Generate_matrice {
 				poids=poids*1.0
 				PRE[index_ligne,index_colonne]=poids
 			}
-		}		
+		}
 
 		for { set element 0 } { $element < $len_post } { incr element } {
 			set index_ligne [lindex [lindex $post $element] 0]
@@ -96,17 +104,17 @@ namespace eval Generate_matrice {
 			vexpr {
 				poids=poids*1.0
 				POST[index_ligne,index_colonne]=poids
-			}		
-		} 
+			}
+		}
 		for { set element 0 } { $element < $len_mar } { incr element } {
 			set index_place [lindex [lindex $mar $element] 0]
 			set marquage [lindex [lindex $mar $element] 1]
 			vexpr {
-				marquage=marquage*1.0 
-				M[index_place,0]=marquage				
+				marquage=marquage*1.0
+				M[index_place,0]=marquage
 			}
 		}
-	
+
 		#Écriture dans Matrices.tcl:
 		puts $mat "##############DEF MATRICIELLE DU RdP########################################"
 		puts $mat "vectcl::vexpr { \n \t Post=create({$POST}); #def Post \n \t Pre=create({$PRE}); #def Pre \n}";
@@ -121,5 +129,3 @@ namespace eval Generate_matrice {
 		exec cp $JRdP::path/Generated_Tcl/Matrices.tcl $JRdP::path/JRdP_Embadded/Generated_Tcl/Matrices.tcl
 	}
 }
-
-

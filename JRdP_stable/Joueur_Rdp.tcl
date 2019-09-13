@@ -10,15 +10,22 @@
 
 #THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#######Chargement des packages:	
+#######Chargement des packages:
 package require vectcl;
 namespace import vectcl::*;
 package require genomix;
 namespace import ::genomix::*;
 
+if { $argc != 1 } {
+    puts "Invalid syntax. Usage:"
+    puts "$argv0 <ndr_input_file>"
+    exit 2
+}
 
 namespace eval JRdP {
-	
+
+  set ndr_file [lindex $argv 0]
+
 	#######Init Logs:
 
 	set path [pwd];
@@ -36,7 +43,7 @@ namespace eval JRdP {
 		source $path/Sources_Tcl/Data.tcl; #Chargement des données.
 		source $path/Sources_Tcl/Generate_configuration.tcl; #Générer Configuration_RdP.tcl
 
-		puts "Voulez vous Commencer le Jeu du RdP,Recommencer la configuration ou Quitter? (resp 1 ou r ou q):"
+		puts "Voulez vous Commencer le Jeu du RdP (1), Recommencer la configuration (r) ou Quitter (q)? :"
 		set config [gets stdin];
 		switch $config {
 			"1" { }
@@ -59,29 +66,29 @@ namespace eval JRdP {
 		set test [catch {[join [list $composant $service] "::"] -h} exception]
 		if { $test } {
 			puts "Config_ERROR:Le service $service n'est pas fourni par le composant $composant. Vérifier le nom du composant et le nom de service dans les actions de la transition $transition"
-			exec pkill xterm; exec pkill genomixd; exec pkill roscore; exit 1; 
+			exec pkill xterm; exec pkill genomixd; exec pkill roscore; exit 1;
 		}
 	}
 
-	#Connextion avec nd:
+	# Connexion avec nd:
 	if [catch {exec mkfifo jrdp2nd} ex] {
 		exec rm jrdp2nd
 		exec mkfifo jrdp2nd
-	} 
+	}
 	set nd_pid [exec nd temp_SG.ndr &]
 
 
 	while 1 {
 		set test_open [catch {set fifo [open jrdp2nd {WRONLY NONBLOCK}]} ex ]
-		
+
 		if { !$test_open } {
 			break;
 		}
 		puts "En attente de connexion avec nd...."
 		after 1500;
 	}
-	
-	
+
+
 
 	#Logs:
 	puts "\n\nJRdP démarre...";
@@ -93,78 +100,72 @@ namespace eval JRdP {
 	set cr 0 ; #compteur de tours de boucle
 	set Arret 0;
 	#####LOGS:
-                      
+
 	puts $f "Nombre de transitions: $nb_t // Nombre de places: $nb_p"
 	puts $f "Boucle Joueur démarre:"
-	puts -nonewline $f "------Marquage Initial:  "; affiche_marquage $JRdP::f; 
+	puts -nonewline $f "------Marquage Initial:  "; affiche_marquage $JRdP::f;
 
 	###### Boucle du joueur:
 	while {$dpt} {
 
-
-		#Actualisation des événements:
+		## Actualisation des événements:
 
 		update;
-	
-		###Actualisation des états des Requetes selon l'état des services // Équivalent acquisition des entrées:
-		
-		ACTUALISATION_REQUESTS;
-		
-		#Recherche des transitions sensibilsees:
-	
-		TRANSITIONS_SENSIBILISEES;  
 
-		###Actualisation des flags selon l'état des requetes associées aux transitions sensibilisées// Équivalent acquisition des entrées:
+		## Actualisation des états des Requetes selon l'état des services // Équivalent acquisition des entrées:
+
+		ACTUALISATION_REQUESTS;
+
+		## Recherche des transitions sensibilsees:
+
+		TRANSITIONS_SENSIBILISEES;
+
+		## Actualisation des flags selon l'état des requetes associées aux transitions sensibilisées// Équivalent acquisition des entrées:
 
 		ACTUALISATION_FLAGS ;
 
-
-		#Générer les conditions des transitions sensibilisees à partir des flags:
+		## Générer les conditions des transitions sensibilisees à partir des flags:
 
 		GENERATE_CONDITIONS;
 
-		 
-
-		##Évaluation de la franchissabilité des transitions:
+		## Évaluation de la franchissabilité des transitions:
 
 		FIRE_TRANSITIONS ;
 
-		##Actions sur les transitions:
-		
+		## Actions sur les transitions:
+
 		ACTIONS_TRANSITIONS;
-	
-		##Actions sur les places:
+
+		## Actions sur les places:
 
 		ACTIONS_PLACES;
-	
 
-		#Conteur de tours:
+		# loop count:
+		incr cr;
 
-		incr cr; 
-	
 
 		##Condition d'arrêt:
 
 			#puts $f "******: $Conditions_totales";             #debug
 
-		if { $Arret==1} { 
+		if { $Arret==1} {
 			set dpt 0;
 			puts $f "***********************FIN************************"
 			close $f;
 		}
 
-	
-	 	
+
+
 	}
 
 	#Gestion des consoles à la fin d'exécution:
 
 	puts "Terminé! Vous pouvez vérfier les Logs\n\n"
 
-	exec pkill roscore 				;	#Fin de roscore 
+	exec pkill roscore 				;	#Fin de roscore
 	exec pkill genomixd				;	#Fin de genomixd
-	exec  rm jrdp2nd;  #suppresion du named pipe
-	exec rm temp_SG.ndr;  #suppresion du temp
+	exec  rm jrdp2nd;  # suppresion du named pipe
+	exec rm temp_SG.ndr;  # suppresion du temp
 
 	puts "Voulez vous fermer les consoles des composants et le stepper nd ? (1 ou 0)"
 	set terminer [gets stdin];
@@ -175,4 +176,3 @@ namespace eval JRdP {
 
 	}
 }
-
