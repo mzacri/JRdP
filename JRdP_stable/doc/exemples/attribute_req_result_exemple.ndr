@@ -1,0 +1,26 @@
+t 40.0 210.0 t0 c 0 w n {Conditions: ?1?; Actions: §init§;} ne
+a 770.0 20.0 n5 1 {Configuration:}
+a 770.0 65.0 n4 1 {Ports:\\n}
+a 830.0 65.0 n2 1 {Components:\\ndemo}
+p 40.0 65.0 p0 1 n
+p 40.0 330.0 p1 0 n
+a 770.0 140.0 n3 1 {Script TCL:\\n#Initialisation des variable:\\n}
+t 40.0 450.0 t1 c 0 w n {Conditions: ?1? ; Actions: /demo GetPosRef/; } ne
+p 40.0 570.0 p2 0 n
+p 175.0 810.0 p3 0 n
+p 30.0 800.0 p4 0 n
+t 35.0 715.0 t3 c 0 w n {Conditions: ?[ JRdP::result_req demo_GetPosRef_t1 ] != 1.0? ; Actions: ;} ne
+t 175.0 630.0 t2 c 0 w n {Conditions: ?[ JRdP::result_req demo_GetPosRef_t1 ] == 1.0? ; Actions: ;} ne
+a 770.0 255.0 n0 1 {Fonctions:\\n\\ninit (\\n/demo SetPosRef 1.0/\\n)\\n\\n}
+a 315.0 540.0 n1 1 {As GetPosRef is an attribute (it returns only one variable), these transitions conditions are equivalent:\\nConditions: ?[ JRdP::result_req demo_GetPosRef_t1 ] == 1.0? \\nConditions: ?[ JRdP::result_req demo_GetPosRef_t1 posRef ] == 1.0? }
+e t0 p1 1 n
+e p0 t0 1 n
+e p1 t1 1 n
+e t1 p2 1 n
+e p2 t2 1 n
+e t2 p3 1 n
+e p2 t3 1 n
+e t3 p4 1 n
+h attribute_req_result_exemple
+
+

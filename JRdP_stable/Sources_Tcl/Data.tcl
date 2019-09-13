@@ -20,7 +20,7 @@
 
 #I-Définitions structures de données:
 
-	#1----fonction:créer une liste vide: 
+	#1----fonction:créer une liste vide:
 
 		proc liste_vide { length } {
 			set liste "";
@@ -28,25 +28,25 @@
 			return $liste
 		}
 
-	#2----fonction:créer une liste de dictionnaires: 
+	#2----fonction:créer une liste de dictionnaires:
 
 		proc liste_arrays { length } {
 			set liste "";
 			for { set i 0 } { $i < $length } { incr i } {
-		
+
 				lappend liste [array set l { }]
 			}
 			return $liste
 		}
 
-	#3----Définitions des variables internes: 
+	#3----Définitions des variables internes:
 
 		vexpr {
 
-			Transitions_sensibilisees=zeros(nb_t);		#Vecteur  transitions sensibilisées ( marquage des places prétransition différent de zero ).	
+			Transitions_sensibilisees=zeros(nb_t);		#Vecteur  transitions sensibilisées ( marquage des places prétransition différent de zero ).
 			Transitions_valides=zeros(nb_t);		#Vecteur  transitions valides ( tirables )
 
-			Conditions=zeros(nb_t); 			#vecteur conditions sur les Transitions: Transition sensibilisée + condition valide = transition valide ). 
+			Conditions=zeros(nb_t); 			#vecteur conditions sur les Transitions: Transition sensibilisée + condition valide = transition valide ).
 
 		}
 
@@ -71,21 +71,21 @@
 		proc Load_components { handle components } {
 
 			foreach {component inst_nom} $components {  #Chargement des composants
-				
+
 				exec xterm -hold -e $component-ros -i $inst_nom & ;
 				while {1} {
-					if ![catch {set status [exec rostopic list | grep -c $inst_nom ]} ex] {  
+					if ![catch {set status [exec rostopic list | grep -c $inst_nom ]} ex] {
 						if { $status !=0 } {
 							$handle load $component -i $inst_nom;
 							puts $JRdP::f "::::: $component chargé sur $handle :::::";
 							break;
-			
+
 						}
 					}
 					puts "En attente de démarrage de $component as $inst_nom..."
 					after 500;
 				}
-				
+
 
 			}
 
@@ -107,27 +107,27 @@
 
 		proc genomix {} {
 			exec gnome-terminal -e roscore & 	;				#chargement de roscore
-		
+
 			while {1} {
 				set status [catch {exec rostopic list} result];   #attente roscore
 				puts "En attente de démarrage de roscore..."
 				if { $status == "0" } {
 					exec gnome-terminal -e genomixd &;             #chargement de genomixd
 					break;
-			
-				} 
+
+				}
 				after 500;
 			}
-		
+
 			while {1} {
 				set status [catch {set handle [genomix::connect] ;} result];   #attente roscore
 				puts "En attente de démarrage de Genomixd..."
 				if { $status == "0" } {
 					break;
-				} 
+				}
 				after 100;
 			}
-			  
+
 			puts $JRdP::f "::::: Deamon genomix démarré: $handle ::::: ";			#LOGS
 
 			return $handle;
@@ -135,46 +135,46 @@
 
 		}
 
-	#4----fonction association transition-service: 
+	#4----fonction association transition-service:
 
 
 		proc associer_service_transition { transition nom_composant nom_service { parametres "" } } {
 
 			##test:
-	
+
 			##corps:
-			set act [lindex $JRdP::Actions_transitions $transition]; 
+			set act [lindex $JRdP::Actions_transitions $transition];
 			set request  [join [list "$nom_composant" "_$nom_service" "_t$transition"] ""];
 			set ::JRdP::inst_$request 1;
 			set commande [join [list "incr ::JRdP::inst_$request;set " "::JRdP::$request" "  \[::$nom_composant" "::$nom_service -s $parametres &\] ;"] ""];
 
 			set commande [join [list $commande "set ::JRdP::Requests_status($request) \[list \"zero\" \"result\" \]" ] ";"]
-				
+
 			lappend act $commande;
 			lset JRdP::Actions_transitions  $transition $act;
 
-	
+
 		}
 
-	#5----fonction association script-service: 
+	#5----fonction association script-service:
 
 
 		proc associer_script_transition { transition script } {
 
 			##test:
-	
+
 			##corps:
-			set act [lindex $JRdP::Actions_transitions $transition]; 
+			set act [lindex $JRdP::Actions_transitions $transition];
 			set commande [join [list "namespace eval Script {" "eval \{$script\}" "}"] ""];
-	
+
 			lappend act $commande;
 			lset JRdP::Actions_transitions  $transition $act;
 
-	
+
 		}
 
 
-	#6----fonction association d'un Flag de transition à une Requête de service: 
+	#6----fonction association d'un Flag de transition à une Requête de service:
 
 
 		proc sensibilise_transition_service { transition id_req status {result "default"} } {
@@ -182,11 +182,11 @@
 			array set l [lindex $JRdP::Flags $transition];
 			set l($id_req)  [list "0.0" "$status" "$result" "0"];
 			lset JRdP::Flags $transition [array get l];
-	
+
 		}
 
 	#7----fonction marquage place:
-	
+
 		proc marquage_place { place } {
 			return [lindex $JRdP::M $place]
 		}
@@ -201,7 +201,7 @@
 				if { $m != 0 } {
 				lappend lst " P$p :: $m  "
 				}
-	
+
 			}
 			puts $out $lst
 
@@ -215,15 +215,15 @@
 			set time_clock [clock seconds]
 			set time_clock [expr $time_clock - [join [list "\$Script" "::" $time_ref] ""]]
 			if { [expr ($time_target - $time_clock) <= $precision] && [expr ($time_target - $time_clock) >= -1*$precision] } {
-				return 1;	
+				return 1;
 			} else {
 				return 0;
-			} 	
-	
+			}
+
 		}
 
 
-	
+
 
 	#11----fonction donne les transitions sensibilisés:
 
@@ -231,13 +231,13 @@
 		proc TRANSITIONS_SENSIBILISEES { } {
 
 			for { set t 0 } { $t < $JRdP::nb_t } { incr t } {
-				#Générer la condition de tirage de la tranition t à partir de la Condition_totale et le marquage M: 		
-				vexpr {	
+				#Générer la condition de tirage de la tranition t à partir de la Condition_totale et le marquage M:
+				vexpr {
 					#comparaison marquage pre:
-					v_comp=(JRdP::M>JRdP::Pre[:,t])||(JRdP::M==JRdP::Pre[:,t]) 				
+					v_comp=(JRdP::M>JRdP::Pre[:,t])||(JRdP::M==JRdP::Pre[:,t])
 					comp=1
 				}
-	
+
 				#puts $JRdP::f " ///////// $v_comp"; #debug comparaison marquage pre
 
 				foreach c $v_comp {
@@ -245,10 +245,10 @@
 				}
 
 				lset JRdP::Transitions_sensibilisees $t $comp
-			}  
+			}
 
 
-		}	
+		}
 
 
 
@@ -259,24 +259,24 @@
 			for { set t 0 } { $t < $JRdP::nb_t } { incr t } {
 				#Pour les transitions sensibilisées:
 				if [lindex $JRdP::Transitions_sensibilisees $t] {
-	
-					foreach {request lst}  [lindex $JRdP::Flags $t] { 
-					
+
+					foreach {request lst}  [lindex $JRdP::Flags $t] {
+
 						if {[info exists ::JRdP::Requests_status($request)] } {
 
 							set liste $::JRdP::Requests_status($request);
 							set status [lindex $liste 0]
 							set exception [lindex $liste 1]
-							set req ::JRdP::inst_$request 
+							set req ::JRdP::inst_$request
 							#Mise à jour de la valeur du Flag:
-							if { $status == [lindex $lst 1] } { 
-				
+							if { $status == [lindex $lst 1] } {
+
 								lset lst 0 "1.0";
-								#Remise à 0 si: 
+								#Remise à 0 si:
 								if { ( $status == "error" && [lindex $lst 2] != [dict get $exception ex] && [lindex $lst 2] != "default") || [expr $$req] == [lindex $lst 3] } {
 										lset lst 0 "0.0";
 								}
-	
+
 							} else {
 								lset lst 0 "0.0";
 							}
@@ -289,10 +289,10 @@
 						}
 
 					}
-				}	
+				}
 			}
 
-		
+
 		}
 
 
@@ -302,19 +302,19 @@
 			foreach {request lst} [array get ::JRdP::Requests_status] {
 
 				set req ::JRdP::$request
-				if {  [info exists $req] } {	
+				if {  [info exists $req] } {
 					set status [[expr $$req] status]
 					set liste $::JRdP::Requests_status($request);
-					set old_status [lindex $liste 0] 
+					set old_status [lindex $liste 0]
 					if { $old_status != $status } {
-						
+
 						lset lst 0 $status
 
 						puts $JRdP::f "Report: $request on $status";
 						puts  "Report: $request on $status";
 
 						if { $status == "error"  } {
-							catch {[expr $$req] result} excep 
+							catch {[expr $$req] result} excep
 							lset lst 1 $excep
 							puts $JRdP::f "Error $request details: $excep";
 							puts  "Error $request details: $excep";
@@ -329,10 +329,10 @@
 						}
 
 						set ::JRdP::Requests_status($request) $lst;
-	
-					} 
-					
-						
+
+					}
+
+
 				}
 
 			}
@@ -342,13 +342,32 @@
 
 		}
 
-	#13----fonction récupération du résultat d'une requête:
-	
-	proc result_req { request } {
-		
+	#13 --- Retrieves the result of a request
+  # var_name (optional): name of the variable for which the value must be returned
+
+	proc result_req { request {var_name ""} } {
+
 		set liste $::JRdP::Requests_status($request);
 		set result [lindex $liste 1]
-		return $result
+    if { $var_name eq ""} {
+      # no variable name specified -> the attribute / function must out
+      # only one variable that will be automatically returned,
+      # otherwise returns error
+      if { [dict size $result] != 1 } {
+        error "Invalid result_req usage" "The service returns [dict size $result] variables,
+        so the name of the returned variable to be evaluated must be given."
+      }
+      # at this point $result must be only a pair <variable> <value>
+      set out [lindex $result 1]
+    } else {
+      # use specified variable name to retrieve corresponding value
+      if { ![dict exists $result $var_name] } {
+        error "Invalid result_req variable name" "Given variable name to be evaluated $var_name,
+        does not exists in list of result request variables: [dict keys $result]"
+      }
+      set out [dict get $result $var_name]
+    }
+    return $out
 	}
 
 	#14---fonction tirage transitions:
@@ -358,7 +377,7 @@
 			for {set t 0} {$t < $JRdP::nb_t} { incr t } {
 				if { [expr [lindex $JRdP::Conditions $t] * [lindex $JRdP::Transitions_sensibilisees $t] ] } {
 
-					lset JRdP::Transitions_valides $t 1.0;	
+					lset JRdP::Transitions_valides $t 1.0;
 				} else {
 
 					lset JRdP::Transitions_valides $t 0.0;
@@ -368,38 +387,37 @@
 			uplevel 1 {
 				vectcl::vexpr { M=M+Post*Transitions_valides-Pre*Transitions_valides; }
 			}
-			
-			
+
+
 			##Detection Non déterminisme:
 			foreach marquage $JRdP::M {
-				if { [lindex $marquage 0] < 0 } { 
-					puts "JRdP_ERROR:Non déterminsme detecté! \nLe marquage négative représente la place sujet de non déterminisme:";				
-					affiche_marquage; 
+				if { [lindex $marquage 0] < 0 } {
+					puts "JRdP_ERROR:Non déterminsme detecté! \nLe marquage négative représente la place sujet de non déterminisme:";
+					affiche_marquage;
 					exit 1;
 				}
-			} 
+			}
 
 		}
 
-	
+
 
 	#15---fonction formulation de la condition à partir des flags associées:
 
 		proc GENERATE_CONDITIONS { } {
 			for {set t 0} {$t<$JRdP::nb_t} { incr t } {
-				#On génére les conditions des transitions sensibilisées
+      	# On génére les conditions des transitions sensibilisées
 				if [lindex $JRdP::Transitions_sensibilisees $t] {
 					set cond "0.0";
 					array set Script::lst_temp [lindex $JRdP::Flags $t];
-					set exprn [lindex $JRdP::Flags_cond $t]  
+					set exprn [lindex $JRdP::Flags_cond $t]
 					set cond [eval $exprn ]
 					lset JRdP::Conditions $t $cond
 				} else {
 					lset JRdP::Conditions $t 0.0;
 				}
-		
-			}
 
+			}
 		}
 
 
@@ -411,8 +429,8 @@
 			for {set t 0} {$t < $JRdP::nb_t} { incr t } {
 
 				#Choix des transitions valides:
-				if { [lindex $JRdP::Transitions_valides $t] } { 
-				
+				if { [lindex $JRdP::Transitions_valides $t] } {
+
 					set systemTime [clock seconds]
 					#Appel des servies associées à la transition tirée ( dans l'ordre des transtions ):
 					foreach commande [lindex $JRdP::Actions_transitions $t] {
@@ -423,37 +441,33 @@
 					foreach {request lst} [lindex $JRdP::Flags $t] {
 						set flag [lindex $lst 0]
 						set status [lindex $lst 1]
-						if {$flag == 1 && $status != "sent" } { 
+						if {$flag == 1 && $status != "sent" } {
 							set req ::JRdP::inst_$request
 							lset lst 3 [expr $$req]; #sauvgarde de la dernière requête qui a validé le flag ( en dehors du status "sent" )
 							array set l [lindex $JRdP::Flags $t];
 							set l($request) $lst;
 							lset JRdP::Flags $t [array get l];
 							array unset l;
-							
-						}
-						
-					}
-		     
-					puts $JRdP::f "------Transition t$t tirée à [clock format $systemTime -format %H:%M:%S]"
-					puts -nonewline $JRdP::f "------Evolution Marquage après $JRdP::cr tour boucle :";affiche_marquage $JRdP::f;# Logs <--Marquage 
 
-					
+						}
+
+					}
+
+					puts $JRdP::f "------Transition t$t tirée à [clock format $systemTime -format %H:%M:%S]"
+					puts -nonewline $JRdP::f "------Evolution Marquage après $JRdP::cr tour boucle :";affiche_marquage $JRdP::f;# Logs <--Marquage
+
+
 
 
 					puts "------Transition t$t tirée à [clock format $systemTime -format %H:%M:%S]"
-					puts  "------Evolution Marquage après $JRdP::cr tour boucle :";affiche_marquage;# Logs <--Marquage	
+					puts  "------Evolution Marquage après $JRdP::cr tour boucle :";affiche_marquage;# Logs <--Marquage
 					set JRdP::cr 0;
 
 					#Communication avec nd à travers le named pipe fifo:
 					puts $JRdP::fifo "t$t"
 					flush $JRdP::fifo
-					
-				}	
-		
+
+				}
+
 			}
 		}
-
-	
-
-	

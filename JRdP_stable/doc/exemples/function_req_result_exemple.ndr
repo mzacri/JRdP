@@ -1,0 +1,41 @@
+t 40.0 210.0 t0 c 0 w n {Conditions: ?1?; Actions: §init§;} ne
+a 770.0 20.0 n5 1 {Configuration:}
+a 770.0 65.0 n4 1 {Ports:\\n}
+a 830.0 65.0 n2 1 {Components:\\ndemo}
+p 40.0 65.0 p0 1 n
+p 40.0 330.0 p1 0 n
+a 770.0 140.0 n3 1 {Script TCL:\\n#Initialisation des variable:\\n}
+t 40.0 450.0 t1 c 0 w n {Conditions: ?1? ; Actions: /demo GetSpeedAndPosRef/; } ne
+p 40.0 570.0 p2 0 n
+p 30.0 800.0 p4 0 n
+t 35.0 715.0 t3 c 0 w n {Conditions: ?[ JRdP::result_req demo_GetSpeedAndPosRef_t1 o_posRef] != 1.0? ; Actions: ;} ne
+t 980.0 760.0 t2 c 0 w n {Conditions: ?[ JRdP::result_req demo_GetSpeedAndPosRef_t1 o_posRef] == 1.0? ; Actions: ;} ne
+p 990.0 940.0 p3 0 n
+t 1260.0 1115.0 t5 c 0 w n {Conditions: ?![string match [ JRdP::result_req demo_GetSpeedAndPosRef_t1 o_speedRef] ::demo::FAST ]? ; Actions: ;} ne
+p 1275.0 1290.0 p6 0 n
+t 930.0 1040.0 t4 c 0 w n {Conditions: ?[string match [ JRdP::result_req demo_GetSpeedAndPosRef_t1 o_speedRef] ::demo::FAST ]? ; Actions: ;} ne
+p 935.0 1280.0 p5 0 n
+t 160.0 1080.0 t7 c 0 w n {Conditions: ?![string match [ JRdP::result_req demo_GetSpeedAndPosRef_t1 o_speedRef] ::demo::FAST ]? ; Actions: ;} ne
+p 160.0 1275.0 p8 0 n
+p 30.0 1270.0 p7 0 n
+a 770.0 255.0 n0 1 {Fonctions:\\n\\ninit (\\n/demo SetSpeed ::demo::FAST/\\n/demo SetPosRef 1.0/\\n)\\n\\n}
+t 35.0 1000.0 t8 c 0 w n {Conditions: ?[string match [ JRdP::result_req demo_GetSpeedAndPosRef_t1 o_speedRef] ::demo::FAST ]? ; Actions: ;} ne
+e t8 p7 1 n
+e p4 t8 1 n
+e t3 p4 1 n
+e p2 t3 1 n
+e t2 p3 1 n
+e p2 t2 1 n
+e t1 p2 1 n
+e p1 t1 1 n
+e p0 t0 1 n
+e t0 p1 1 n
+e p4 t7 1 n
+e t7 p8 1 n
+e p3 t4 1 n
+e t4 p5 1 n
+e p3 t5 1 n
+e t5 p6 1 n
+h function_req_result_exemple
+
+
