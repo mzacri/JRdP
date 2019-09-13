@@ -249,14 +249,33 @@
 			}
 		}
 
-	#13----fonction récupération du résultat d'une requête:
-	proc result_req { request } {
-		set liste $::JRdP::Requests_status($request);
-		set result [lindex $liste 1]
-		return $result
-	}
+    #13 --- Retrieves the result of a request
+    # var_name (optional): name of the variable for which the value must be returned
+  	proc result_req { request {var_name ""} } {
+  		set liste $::JRdP::Requests_status($request);
+  		set result [lindex $liste 1]
+      if { $var_name eq ""} {
+        # no variable name specified -> the attribute / function must out
+        # only one variable that will be automatically returned,
+        # otherwise returns error
+        if { [dict size $result] != 1 } {
+          error "Invalid result_req usage" "The service returns [dict size $result] variables,
+          so the name of the returned variable to be evaluated must be given."
+        }
+        # at this point $result must be only a pair <variable> <value>
+        set out [lindex $result 1]
+      } else {
+        # use specified variable name to retrieve corresponding value
+        if { ![dict exists $result $var_name] } {
+          error "Invalid result_req variable name" "Given variable name to be evaluated $var_name,
+          does not exists in list of result request variables: [dict keys $result]"
+        }
+        set out [dict get $result $var_name]
+      }
+      return $out
+  	}
 
-	#14---fonction tirage transitions:
+	  #14---fonction tirage transitions:
 		proc FIRE_TRANSITIONS {} {
 			for {set t 0} {$t < $JRdP::nb_t} { incr t } {
 				if { [expr [lindex $JRdP::Conditions $t] * [lindex $JRdP::Transitions_sensibilisees $t] ] } {
