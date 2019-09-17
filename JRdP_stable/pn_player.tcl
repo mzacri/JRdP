@@ -66,117 +66,125 @@ if {$argc > 1 } {
 }
 
 namespace eval JRdP {
+  #######Init Logs:
+  set cur_path [pwd];
+  set f [open [file join $working_dir $log_file] w+]
 
-	#######Init Logs:
-	set cur_path [pwd];
-	set f [open [file join $working_dir $log_file] w+]
+  puts $f "---------- LOGS :: [clock format [clock seconds] -format { %a/%b/%Y %H:%M:%S }] :: Superviseur  "
 
-	puts $f "---------- LOGS :: [clock format [clock seconds] -format { %a/%b/%Y %H:%M:%S }] :: Superviseur  "
-
-	###### load configured files
+  ###### load configured files
+  puts "Loading Petri net structure file..."
   source $pn_struct_matrix_tcl_file;
+  puts "Setting up local data..."
   source $cur_path/src/data.tcl;
+  puts "Loading Petri net configuration file..."
   source $pn_config_tcl_file;
+  puts "Petri net successfully loaded"
 
-	#source $path/Generated_Tcl/Configuration_RdP.tcl ; #Chargement Configuration
-  if { $with_nd } {
-	   source $cur_path/src/pilot_ndstepper.tcl ;
+  #source $path/Generated_Tcl/Configuration_RdP.tcl ; #Chargement Configuration
+  # if { $with_nd } {
+  #    source $cur_path/src/pilot_ndstepper.tcl;
+  # }
+
+  #Vérification des services fournis par les composants:
+  puts "Checking actions services consistency..."
+  foreach req $requetes_actions {
+    set service [lindex $req 1]
+    set composant [lindex $req 0]
+    set transition [lindex $req 2]
+    set test [catch {[join [list $composant $service] "::"] -h} exception]
+    if { $test } {
+      exec pkill xterm; exec pkill genomixd; exec pkill roscore;
+      error "Configuration error." "The requested service $service is not provided by the component $composant.
+       Check requested component / service in actions list of transition $transition"
+    }
   }
 
-	#Vérification des services fournis par les composants:
-	foreach req $requetes_actions {
-		set service [lindex $req 1]
-		set composant [lindex $req 0]
-		set transition [lindex $req 2]
-		set test [catch {[join [list $composant $service] "::"] -h} exception]
-		if { $test } {
-			puts "Config_ERROR:Le service $service n'est pas fourni par le composant $composant. Vérifier le nom du composant et le nom de service dans les actions de la transition $transition"
-			exec pkill xterm; exec pkill genomixd; exec pkill roscore; exit 1;
-		}
-	}
-
-	#Connextion avec nd:
+  #Connextion avec nd:
   # XXX merge with souce nd stepper ?
   if { $with_nd } {
-  	if [catch {exec mkfifo $nd_fifo_file} ex] {
-  		exec rm $nd_fifo_file
-  		exec mkfifo $nd_fifo_file
-  	}
-  	set nd_pid [exec nd $nd_temp_ndr_file &]
+    puts "Connecting with nd stepper..."
+    source $cur_path/src/pilot_ndstepper.tcl;
 
-  	while 1 {
-  		set test_open [catch {set fifo [open $nd_fifo_file {WRONLY NONBLOCK}]} ex ]
+    if [catch {exec mkfifo $nd_fifo_file} ex] {
+      exec rm $nd_fifo_file
+      exec mkfifo $nd_fifo_file
+    }
+    set nd_pid [exec nd $nd_temp_ndr_file &]
 
-  		if { !$test_open } {
-  			break;
-  		}
-  		puts "En attente de connexion avec nd...."
-  		after 1500;
-  	}
+    while 1 {
+      set test_open [catch {set fifo [open $nd_fifo_file {WRONLY NONBLOCK}]} ex ]
+      if { !$test_open } {
+        break;
+      }
+      puts "** Waiting for connection with nd..."
+      after 1500;
+    }
   }
 
-	#Logs:
-	puts "\n\nJRdP démarre...";
-	puts "Marquage Initial:  "; affiche_marquage;
+  #Logs:
+  puts "\n\nJRdP is starting...";
+  puts "Initial marking:  ";
+  affiche_marquage;
 
-	######Joueur de Rdp:
-	set dpt 1 ; #variable depart boucle
-	set cr 0 ; #compteur de tours de boucle
-	set Arret 0;
-	#####LOGS:
+  ######Joueur de Rdp:
+  set dpt 1 ; #variable depart boucle
+  set cr 0 ; #compteur de tours de boucle
+  set Arret 0;
+  #####LOGS:
 
-	puts $f "Nombre de transitions: $nb_t // Nombre de places: $nb_p"
-	puts $f "Boucle Joueur démarre:"
-	puts -nonewline $f "------Marquage Initial:  "; affiche_marquage $JRdP::f;
+  puts $f "Nombre de transitions: $nb_t // Nombre de places: $nb_p"
+  puts $f "Boucle Joueur démarre:"
+  puts -nonewline $f "------Marquage Initial:  "; affiche_marquage $JRdP::f;
 
-	###### Boucle du joueur:
-	while {$dpt} {
+  ###### Boucle du joueur:
+  while {$dpt} {
 
-		#Actualisation des événements:
-		update;
+    #Actualisation des événements:
+    update;
 
-		###Actualisation des états des Requetes selon l'état des services // Équivalent acquisition des entrées:
-		ACTUALISATION_REQUESTS;
+    ###Actualisation des états des Requetes selon l'état des services // Équivalent acquisition des entrées:
+    ACTUALISATION_REQUESTS;
 
-		#Recherche des transitions sensibilsees:
-		TRANSITIONS_SENSIBILISEES;
+    #Recherche des transitions sensibilsees:
+    TRANSITIONS_SENSIBILISEES;
 
-		###Actualisation des flags selon l'état des requetes associées aux transitions sensibilisées// Équivalent acquisition des entrées:
-		ACTUALISATION_FLAGS ;
+    ###Actualisation des flags selon l'état des requetes associées aux transitions sensibilisées// Équivalent acquisition des entrées:
+    ACTUALISATION_FLAGS ;
 
-		#Générer les conditions des transitions sensibilisees à partir des flags:
-		GENERATE_CONDITIONS;
+    #Générer les conditions des transitions sensibilisees à partir des flags:
+    GENERATE_CONDITIONS;
 
-		##Évaluation de la franchissabilité des transitions:
-		FIRE_TRANSITIONS ;
+    ##Évaluation de la franchissabilité des transitions:
+    FIRE_TRANSITIONS ;
 
-		##Actions sur les transitions:
-		ACTIONS_TRANSITIONS;
+    ##Actions sur les transitions:
+    ACTIONS_TRANSITIONS;
 
-		##Actions sur les places:
-		ACTIONS_PLACES;
+    ##Actions sur les places:
+    ACTIONS_PLACES;
 
-		#Conteur de tours:
-		incr cr;
+    #Conteur de tours:
+    incr cr;
 
-		##Condition d'arrêt:
-			#puts $f "******: $Conditions_totales";             #debug
+    ##Condition d'arrêt:
+      #puts $f "******: $Conditions_totales";             #debug
 
-		if { $Arret==1 } {
-			set dpt 0;
-			puts $f "***********************FIN************************"
-			close $f;
-		}
-	}
+    if { $Arret==1 } {
+      set dpt 0;
+      puts $f "***********************FIN************************"
+      close $f;
+    }
+  }
 
-	#Gestion des consoles à la fin d'exécution:
+  #Gestion des consoles à la fin d'exécution:
 
-	puts "Terminé! Vous pouvez vérfier les Logs\n\n"
+  puts "Terminé! Vous pouvez vérfier les Logs\n\n"
 
-	exec pkill roscore 				;	#Fin de roscore
-	exec pkill genomixd				;	#Fin de genomixd
+  exec pkill roscore         ;  #Fin de roscore
+  exec pkill genomixd        ;  #Fin de genomixd
   if { $with_nd } {
-	  exec rm $nd_fifo_file;  # suppresion du named pipe
-	  exec rm $nd_temp_ndr_file;  #suppresion du temp
+    exec rm $nd_fifo_file;  # suppresion du named pipe
+    exec rm $nd_temp_ndr_file;  #suppresion du temp
   }
 }
