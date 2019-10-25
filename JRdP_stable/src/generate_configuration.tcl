@@ -86,21 +86,43 @@ namespace eval Generate_config {
 			if { [llength $services]>0 } {
 				foreach service $services {
 					set service [string trimright [string trimleft $service "/"] "/"]
-					#Séparation sur les espaces:
-					set service [regexp -all -inline {\S+} $service]
-					set len [llength $service]
-					if { $len == 2 } {
-						set transitions [join [list $transitions "associer_service_transition $transition [lindex $service 0] [lindex $service 1] ; #Associer le service [lindex $service 1] du composant [lindex $service 0] à la transition $transition\n"] ""]
+          # remove backslaches for handling dictionaries
+          set service [string map {\\ ""} $service]
+          # look for dictionary, that would require special care
+          set dicts_list [regexp -all -inline {\{.*\}} $service]
+          if { [llength $dicts_list] > 1 } {
+            error "Found more than one dictionary in action service call"
+          }
+          if { [llength $dicts_list] == 1 } {
+            # handle the parameters as dictionary case
+            set dic [lindex $dicts_list 0]
+            # remove dictionary from service string
+            regsub $dic $service "" service
+            # split word (by spaces) considering the format: <component> <service>
+            set service [regexp -all -inline {\S+} $service]
+            if { [llength $service] != 2 } {
+              error "Action service call with dictionary and invalid syntax"
+            }
+            set transitions [join [list $transitions "associer_service_transition $transition [lindex $service 0] [lindex $service 1] $dicts_list ; #Associer le service [lindex $service 1] du composant [lindex $service 0] à la transition $transition avec $dic comme dictionnaire de paramètres\n"] ""]
 						lappend requetes_actions [list [lindex $service 0] [lindex $service 1] "t$transition"]
-					} elseif { $len == 3 } {
-						set parametres [lindex $service 2];
-						set parametres [regsub {\$} $parametres {$Script::}]
-						set transitions [join [list $transitions "associer_service_transition $transition [lindex $service 0] [lindex $service 1] \{$parametres\} ; #Associer le service [lindex $service 1] du composant [lindex $service 0] à la transition $transition avec [lindex $service 2] comme paramètre\n"] ""]
-						lappend requetes_actions [list [lindex $service 0] [lindex $service 1] "t$transition"]
-					} else {
-						Ecriture_Config $components $transitions $script $ports $places
-            error "Invalid transition actions" "Given actions for transition $transition are not valid"
-					}
+          } else {
+            # handle the no parameter or single parameter case
+  					# split word (by spaces) considering the format: <component> <service> [<parametre>]
+  					set service [regexp -all -inline {\S+} $service]
+  					set len [llength $service]
+  					if { $len == 2 } {
+  						set transitions [join [list $transitions "associer_service_transition $transition [lindex $service 0] [lindex $service 1] ; #Associer le service [lindex $service 1] du composant [lindex $service 0] à la transition $transition\n"] ""]
+  						lappend requetes_actions [list [lindex $service 0] [lindex $service 1] "t$transition"]
+  					} elseif { $len == 3 } {
+  						set parametres [lindex $service 2];
+  						set parametres [regsub {\$} $parametres {$Script::}]
+  						set transitions [join [list $transitions "associer_service_transition $transition [lindex $service 0] [lindex $service 1] \{$parametres\} ; #Associer le service [lindex $service 1] du composant [lindex $service 0] à la transition $transition avec [lindex $service 2] comme paramètre\n"] ""]
+  						lappend requetes_actions [list [lindex $service 0] [lindex $service 1] "t$transition"]
+  					} else {
+  						Ecriture_Config $components $transitions $script $ports $places
+              error "Invalid transition actions" "Given actions for transition $transition are not valid"
+  					}
+          }
 				}
 			}
 			return [list $requetes_actions $transitions]

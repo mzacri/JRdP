@@ -1,0 +1,34 @@
+a 680.0 20.0 n5 1 {Configuration:}
+a 680.0 55.0 n4 1 {Ports:\\n}
+a 735.0 55.0 n2 1 {Components:\\ndemo}
+p 70.0 55.0 p0 1 n
+p 70.0 280.0 p1 0 n
+a 680.0 120.0 n3 1 {Script TCL:\\n#Initialisation des variable:\\n}
+t 70.0 380.0 t1 c 0 w n {Conditions: ?1? ; Actions: /demo SetPosRef 1.0/ et /demo Divide \{number 7 denom 4\}/; } ne
+p 70.0 480.0 p2 0 n
+a 680.0 245.0 n0 1 {Fonctions:\\n\\n}
+t 70.0 180.0 t0 c 0 w n {Conditions: ?1?; Actions: ;} ne
+t 170.0 705.0 t3 c 0 w n {Conditions: ?[ JRdP::result_req demo_Divide_t1 quot] == 1? ; Actions: ;} ne
+p 170.0 870.0 p4 0 n
+t 45.0 615.0 t2 c 0 w n {Conditions: ?[ JRdP::result_req demo_Divide_t1 quot] != 1? ; Actions: ;} ne
+p 30.0 800.0 p3 0 n
+p 65.0 1155.0 p5 0 n
+t 95.0 970.0 t4 c 0 w n {Conditions: ?[ JRdP::result_req demo_Divide_t1 rem] != 3? ; Actions: ;} ne
+t 265.0 1085.0 t5 c 0 w n {Conditions: ?[ JRdP::result_req demo_Divide_t1 rem] == 3? ; Actions: ;} ne
+p 280.0 1310.0 p6 0 n
+a 320.0 1310.0 n1 1 {Expected\\nend place}
+e t3 p4 1 n
+e p2 t3 1 n
+e t1 p2 1 n
+e p1 t1 1 n
+e p0 t0 1 n
+e t0 p1 1 n
+e p2 t2 1 n
+e t2 p3 1 n
+e p4 t5 1 n
+e t5 p6 1 n
+e p4 t4 1 n
+e t4 p5 1 n
+h function_with_parameters_req_result_exemple
+
+
