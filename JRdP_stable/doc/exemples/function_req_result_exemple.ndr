@@ -20,22 +20,23 @@ p 160.0 1275.0 p8 0 n
 p 30.0 1270.0 p7 0 n
 a 770.0 255.0 n0 1 {Fonctions:\\n\\ninit (\\n/demo SetSpeed ::demo::FAST/\\n/demo SetPosRef 1.0/\\n)\\n\\n}
 t 35.0 1000.0 t8 c 0 w n {Conditions: ?[string match [ JRdP::result_req demo_GetSpeedAndPosRef_t1 o_speedRef] ::demo::FAST ]? ; Actions: ;} ne
-e t8 p7 1 n
-e p4 t8 1 n
-e t3 p4 1 n
-e p2 t3 1 n
-e t2 p3 1 n
-e p2 t2 1 n
-e t1 p2 1 n
-e p1 t1 1 n
-e p0 t0 1 n
-e t0 p1 1 n
-e p4 t7 1 n
-e t7 p8 1 n
-e p3 t4 1 n
-e t4 p5 1 n
-e p3 t5 1 n
+a 850.0 1290.0 n10 1 {Expected\\nend place}
 e t5 p6 1 n
+e p3 t5 1 n
+e t4 p5 1 n
+e p3 t4 1 n
+e t7 p8 1 n
+e p4 t7 1 n
+e t0 p1 1 n
+e p0 t0 1 n
+e p1 t1 1 n
+e t1 p2 1 n
+e p2 t2 1 n
+e t2 p3 1 n
+e p2 t3 1 n
+e t3 p4 1 n
+e p4 t8 1 n
+e t8 p7 1 n
 h function_req_result_exemple
 
 
