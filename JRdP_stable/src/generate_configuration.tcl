@@ -164,8 +164,17 @@ namespace eval Generate_config {
 			#Ajout "#transition num_transition" dans la variable transitions:
 			set transitions [ join [list $transitions "\n\n#transition $transition \n\n"] ""]
 			#Si on detecte un pettern de type { {Conditions:nimporte; Actions:.*;} }:
+      set tout ""
 			regexp { {([\s]{0,}Conditions:.*;[\s]{0,}Actions:.*;)[\s]{0,}} } $line tout ligne
 
+      if { [string eq $tout ""] } {
+        error "Transition $transition seems to not have a proper Conditions / actions label defined. Transition line in NDR file is:\n $line. Check syntax and delimiters such as \; ."
+      }
+
+      # puts "****** Transition: $transition"
+      # puts "\t line: $line"
+      # puts "\t tout: $tout"
+      # puts "\t ligne: $ligne"
 			#Si le pattern est detecté:
 			if { [info exists ligne] } {
 				#Récupération des conditions et des actions:
@@ -192,10 +201,13 @@ namespace eval Generate_config {
 					set transitions [lindex $resultat 1]
 					set conditions  [lindex $resultat 0]
 
-					#Gestion d'erreur débile:
+					# Transition vide (oubli d'un délimiteur ?):
+          # puts "** t\[$transition\] : conditions_scripts : $conditions_scripts"
+          # puts "** t\[$transition\] : conditions_services : $conditions_services"
 					if { [llength $conditions_scripts] == 0 && [llength $conditions_services] == 0 }  {
+
             Ecriture_Config $components $transitions $Script $ports $places
-						error "Invalid conditions" "Invalid conditions on transition $transition. "
+						error "Invalid conditions" "Invalid conditions on transition $transition. Check syntax and delimiters."
 					}
 
 					#Substitition de OR par || dans conditions:

@@ -66,7 +66,7 @@
 		proc Load_components { handle components } {
 			foreach {component inst_nom} $components {
         # Chargement des composants
-				exec xterm -hold -e $component-ros -i $inst_nom & ;
+				exec xterm -sl 50000 -hold -e $component-ros -i $inst_nom & ;
 				while {1} {
 					if ![catch {set status [exec rostopic list | grep -c $inst_nom ]} ex] {
 						if { $status !=0 } {
@@ -222,8 +222,11 @@
 		proc ACTUALISATION_REQUESTS {} {
 			foreach {request lst} [array get ::JRdP::Requests_status] {
 				set req ::JRdP::$request
+        # puts "***** Request: $request"
 				if {  [info exists $req] } {
 					set status [[expr $$req] status]
+          puts "***** Request: $request"
+          puts "\tStatus: $status"
 					set liste $::JRdP::Requests_status($request);
 					set old_status [lindex $liste 0]
 					if { $old_status != $status } {
