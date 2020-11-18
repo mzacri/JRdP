@@ -66,7 +66,8 @@
 		proc Load_components { handle components } {
 			foreach {component inst_nom} $components {
         # Chargement des composants
-				exec xterm -sl 50000 -hold -e $component-ros -i $inst_nom & ;
+				#exec xterm -sl 50000 -hold -e $component-ros -i $inst_nom & ;
+				puts "Loading $component to $handle"
 				while {1} {
 					if ![catch {set status [exec rostopic list | grep -c $inst_nom ]} ex] {
 						if { $status !=0 } {
@@ -84,31 +85,21 @@
 	#2----fonction connection port ($component1 : port in ; $component2 : port out):
 		proc Connect_port { port_name1 component1  port_name2 component2 } {
 			global f;
-			eval [join [list "$component1" "::connect_port $port_name1 $component2" "/$port_name2"] ""];
-			puts $JRdP::f "$component1 connecté à $component2 à travers $port_name1/$port_name2";
+			set status [catch {eval [join [list "$component1" "::connect_port $port_name1 $component2" "/$port_name2"] ""]} result];
+			if { $status == "0" } {
+				puts $JRdP::f "$component1 connecté à $component2 à travers $port_name1/$port_name2";
+			} else {
+				error "Ports connection" "Cannot connect $component1 to $component2 via $port_name1/$port_name2. Please check if remote components are loaded and port exists."
+			}	
 		}
 
 	#3---Lancement du deomon genomix:
-		proc genomix {} {
-			exec gnome-terminal -e roscore & 	;				#chargement de roscore
-
-			while {1} {
-				set status [catch {exec rostopic list} result];   #attente roscore
-				puts "En attente de démarrage de roscore..."
-				if { $status == "0" } {
-					exec gnome-terminal -e genomixd &;             #chargement de genomixd
-					break;
-				}
-				after 500;
-			}
-
-			while {1} {
-				set status [catch {set handle [genomix::connect] ;} result];   #attente roscore
-				puts "En attente de démarrage de Genomixd..."
-				if { $status == "0" } {
-					break;
-				}
-				after 100;
+		proc genomix {hostname_port} {
+			puts "Connecting to genomixd demon: $hostname_port ..."
+			set status [catch {set handle [genomix::connect $hostname_port] ;} result];   #attente roscore
+			if { $status == "1" } {
+				puts $result
+				error "Genomix connection" "Unable to connect to $hostname_port"
 			}
 			puts $JRdP::f "::::: Deamon genomix démarré: $handle ::::: ";			#LOGS
 			return $handle;

@@ -15,8 +15,8 @@ namespace eval Generate_config {
 	#I----Encapsulation de code ( contexte d'appel important ):
 
 		# Ecriture dans le buffer Config ( Congiguration_RdP ) :
-		proc Ecriture_Config { components transitions Script ports places } {
-			puts $JRdP::Generate_config::fd_out_config "##### I- Chargement des composants \n\nset handle \[genomix\]; #Lancement deomon genomix , roscore et serveur genomix à l'aide du macro genomix\nset components { $components };  	#Modifiable		#Composant .s à charger\nLoad_components \$handle \$components ; #Chargement des composants (components) sur le deamon genomix (handle)\n\n##### II- Connection des capteurs:\n#---syntax: Connect_port \$port_name \$component1(port in) \$component2(port out)\n\n$ports \n\n##### III- Script_TCL :\n\nnamespace eval Script {\n\t$Script\n\n}\n\n##### V- Structure dynamique du RdP ( association transition service conditions ) :\n\n$transitions \n\n#### VI- actions sur les places:\n\n proc ACTIONS_PLACES {} { \n\tglobal f;\n\tglobal Arret;\n\t$places\n}\n"
+		proc Ecriture_Config { components_loading components transitions Script ports places } {
+			puts $JRdP::Generate_config::fd_out_config "##### I- Chargement des composants \n\n$components_loading##### II- Connection des capteurs:\n#---syntax: Connect_port \$port_name \$component1(port in) \$component2(port out)\n\n$ports \n\n##### III- Script_TCL :\n\nnamespace eval Script {\n\t$Script\n\n}\n\n##### V- Structure dynamique du RdP ( association transition service conditions ) :\n\n$transitions \n\n#### VI- actions sur les places:\n\n proc ACTIONS_PLACES {} { \n\tglobal f;\n\tglobal Arret;\n\t$places\n}\n"
 			puts $JRdP::Generate_config::fd_out_config "###À ne pas modifier:\nset Flags_cond [list $JRdP::Flags_cond]\nset requetes_actions [list $JRdP::Generate_config::requetes_actions]\n"
 		}
 
@@ -34,7 +34,7 @@ namespace eval Generate_config {
 						set conditions [regsub "***=$script_untrimmed" $conditions " $script "];
 					} else {
 						puts "Config_ERROR: Configuration de la condition sur la variable $id_var de la transition $transition n'est pas valable ! \n"
-						Ecriture_Config $components $transitions $script $ports $places; exit 1;
+						Ecriture_Config $components_loading $components $transitions $script $ports $places; exit 1;
 					}
 				}
 			}
@@ -66,13 +66,13 @@ namespace eval Generate_config {
 						} elseif { $len == 3 } {
 							set transitions [join [list $transitions "sensibilise_transition_service $transition $id_request [lindex $request_splitted 1] [lindex $request_splitted 2]; # sensibilise partiellement transition $transition sur le status [lindex $request_splitted 1] de $id_request à l'exception \n"] ""]
 						} else {
-              Ecriture_Config $components $transitions $script $ports $places
+              Ecriture_Config $components_loading $components $transitions $script $ports $places
 							error "Invalid transition condition" "Condition $id_request [lindex $request_splitted 1] [lindex $request_splitted 2] of transition $transition is not valid."
 						}
 						#Substitition de /requete/ par id_request dans contenu:
 						set conditions [regsub -all "$service" $conditions "\[lindex \$lst_temp($id_request) 0\]"];  #lst_temp sera défini dans Data.tcl/GENERATE_CONDITIONS_TOTALES
 					} else {
-            Ecriture_Config $components $transitions $script $ports $places
+            Ecriture_Config $components_loading $components $transitions $script $ports $places
             error "Invalid transition condition (multiple request usage)" "In transition $transition: this version does not support mutiple usage of the same request $id_request with different status as condition on the same transition."
 					}
 				}
@@ -119,7 +119,7 @@ namespace eval Generate_config {
   						set transitions [join [list $transitions "associer_service_transition $transition [lindex $service 0] [lindex $service 1] \{$parametres\} ; #Associer le service [lindex $service 1] du composant [lindex $service 0] à la transition $transition avec [lindex $service 2] comme paramètre\n"] ""]
   						lappend requetes_actions [list [lindex $service 0] [lindex $service 1] "t$transition"]
   					} else {
-  						Ecriture_Config $components $transitions $script $ports $places
+  						Ecriture_Config $components_loading $components $transitions $script $ports $places
               error "Invalid transition actions" "Given actions for transition $transition are not valid"
   					}
           }
@@ -139,6 +139,7 @@ namespace eval Generate_config {
 
 	#2***Variables à mettre dans Configuration_Rdp.tcl:
 
+	set components_loading "";  #Contenant le string avec la configuration du load des composants
 	set components "";#Contenant les composants à charger.
 	set transitions ""; #Contenant la configuration des transitions.
 	set Script "";  #Contenant le Script TCL.
@@ -206,7 +207,7 @@ namespace eval Generate_config {
           # puts "** t\[$transition\] : conditions_services : $conditions_services"
 					if { [llength $conditions_scripts] == 0 && [llength $conditions_services] == 0 }  {
 
-            Ecriture_Config $components $transitions $Script $ports $places
+            Ecriture_Config $components_loading $components $transitions $Script $ports $places
 						error "Invalid conditions" "Invalid conditions on transition $transition. Check syntax and delimiters."
 					}
 
@@ -217,7 +218,7 @@ namespace eval Generate_config {
 					#Ajout de la formule logique qui sera testé sur chaque tour de boucle du JrdP
 					lset JRdP::Flags_cond $transition "namespace eval Script \{ expr $conditions \}"
 				} else {
-          Ecriture_Config $components $transitions $Script $ports $places
+          Ecriture_Config $components_loading $components $transitions $Script $ports $places
           error "Invalid conditions" "No conditions on transition $transition"
 				}
 
@@ -254,13 +255,13 @@ namespace eval Generate_config {
 
 					#Gestion d'erreur débile 2:
 					if { [llength $actions_services]==0 && [llength $actions_scripts]==0 && [llength $actions_fonctions]==0 } {
-            Ecriture_Config $components $transitions $Script $ports $places
+            Ecriture_Config $components_loading $components $transitions $Script $ports $places
             error "Invalid actions" "Invalid actions on transition $transition"
 					}
 				}
 			unset ligne
 			} else {
-        Ecriture_Config $components $transitions $Script $ports $places
+        Ecriture_Config $components_loading $components $transitions $Script $ports $places
         error "Invalid condition syntax" "Invalid condition syntax on transition $transition"
 			}
 
@@ -297,14 +298,16 @@ namespace eval Generate_config {
 				#numéro de la note
 				set note [string trimleft [lindex [split $note " "] 3] "n"]
 
-				#Ajout Script TCL
+
+					
 				if { [string match -nocase "*Script TCL*" [lindex $ligne 0]] } {
+				#Ajout Script TCL
 					set ligne [lrange $ligne 1 end]
 					#Tout la note du script, sauf la première ligne: Script TCL, est mise dans fichier Configuration_RdP:
 					set Script [ join $ligne "\n\t" ]
 					set report_config [join [list $report_config "\nScript TCL: configurés"]]
 				} elseif { [string match -nocase "*Ports*" [lindex $ligne 0]] } {
-          #Configuration Ports:
+          		#Configuration Ports:
 					set ligne [lrange $ligne 1 end]
 					foreach element $ligne {
 						if { ![regexp {#} $element] } {
@@ -324,18 +327,31 @@ namespace eval Generate_config {
 					set report_config "$report_config\nPorts: configurés"
 				#Configuration Components:
 				} elseif { [string match -nocase "*Components*" [lindex $ligne 0]] } {
-					set ligne [lrange $ligne 1 end]
+					set local_components "";
+					set genomix_host_port "";
+					if { [regexp {::} $ligne 1] } {
+						set genomix_host_port [lindex $ligne 1]
+					} else {
+        				Ecriture_Config $components_loading $components $transitions $Script $ports $places
+						error "Invalid genomix hostname::port" "Genomix hostname::port is not detected in first line after \"Genomix hostname::port\" denominator"
+					}
+					set ligne [lrange $ligne 2 end]
 					foreach element $ligne {
 						if { ![regexp {#} $element] } {
 							regexp {(.*) as (.*)} $element tout component instance_component
 							if [info exists component] {
-								set components [join [list $components "$component" "$instance_component" ] " "]
+								set local_components [join [list $local_components "$component" "$instance_component" ] " "]
 								unset component
 							} else {
-								set components [join [list $components [lindex $element 0] [lindex $element 0] ] " "]
+								set local_components [join [list $local_components [lindex $element 0] [lindex $element 0] ] " "]
 							}
 						}
 					}
+					set components [join [list $components $local_components]]
+					set loading "#-----Genomixd components:\nset handle \[genomix $genomix_host_port\]; #Connexion deomon genomix \nset components { $local_components };  	#Modifiable		#Composant .s à charger\nLoad_components \$handle \$components ; #Chargement des composants (components) sur le deamon genomix (handle)\n\n"
+					set components_loading [join [list $components_loading $loading]]
+					unset local_components
+					unset genomix_host_port
 					set report_config "$report_config\nComponents: configurés"
 				} elseif { [string match -nocase "*Fonctions*" [lindex $ligne 0]] } {
           #Configuration Fonctions:
@@ -384,7 +400,7 @@ namespace eval Generate_config {
 
 			#Traitement des erreurs:
 			if { [llength $actions_scripts]==0 && [llength $actions_services]==0} {
-        Ecriture_Config $components $transitions $Script $ports $places
+        Ecriture_Config $components_loading $components $transitions $Script $ports $places
         error "Invalid actions" "Invalid actions within function [string trimleft $contenu {temp_}] on transition $transition"
 			}
 		}
@@ -401,8 +417,8 @@ namespace eval Generate_config {
 			}
 		}
 		if { !$found } {
-			puts "Config_ERROR:Incoherence dans les requettes des services. La requete [lindex $req 0] dans la condition associée à la transition [lindex $req 1] n'est pas coherente avec les services déclarés dans les  transitions"
-			Ecriture_Config $components $transitions $Script $ports $places; exit 1;
+			Ecriture_Config "" $components $transitions $Script $ports $places; 
+			error "Invalid configuration" "Incoherent service requests. Request [lindex $req 0] associated to the transition [lindex $req 1] condition is not coherent with launched services"
 		}
 
 	}
@@ -411,7 +427,7 @@ namespace eval Generate_config {
 	puts  $report_config
 
 	#Écriture dans Configuration_RdP.tcl:
-	Ecriture_Config $components $transitions $Script $ports $places;
+	Ecriture_Config $components_loading $components $transitions $Script $ports $places;
 
 	#Report:
 	# puts "REPORT:$JRdP::path/Generated_Tcl/Configuration_RdP.tcl généré"
