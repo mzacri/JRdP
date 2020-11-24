@@ -343,8 +343,12 @@
 					set JRdP::cr 0;
 
 					#Communication avec nd à travers le named pipe fifo:
-					puts $JRdP::fifo "t$t"
-					flush $JRdP::fifo
+					uplevel 1 {
+						if { $with_nd } {
+							puts $JRdP::fifo "t$t"
+							flush $JRdP::fifo
+						}
+					}
 				}
 			}
 		}
