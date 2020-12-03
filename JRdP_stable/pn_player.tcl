@@ -94,7 +94,6 @@ namespace eval JRdP {
     set transition [lindex $req 2]
     set test [catch {[join [list $composant $service] "::"] -h} exception]
     if { $test } {
-      exec pkill xterm; exec pkill genomixd; exec pkill roscore;
       error "Configuration error." "The requested service $service is not provided by the component $composant.
        Check requested component / service in actions list of transition $transition"
     }
@@ -159,7 +158,7 @@ namespace eval JRdP {
     FIRE_TRANSITIONS ;
 
     ##Actions sur les transitions:
-    ACTIONS_TRANSITIONS;
+    ACTIONS_TRANSITIONS $with_nd;
 
     ##Actions sur les places:
     ACTIONS_PLACES;
@@ -181,8 +180,6 @@ namespace eval JRdP {
 
   puts "Terminé! Vous pouvez vérfier les Logs\n\n"
 
-  exec pkill roscore         ;  #Fin de roscore
-  exec pkill genomixd        ;  #Fin de genomixd
   if { $with_nd } {
     exec rm $nd_fifo_file;  # suppresion du named pipe
     exec rm $nd_temp_ndr_file;  #suppresion du temp

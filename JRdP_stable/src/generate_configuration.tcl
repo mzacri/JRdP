@@ -21,7 +21,7 @@ namespace eval Generate_config {
 		}
 
 		# Traitement des scripts contenu dans les conditions:
-		proc Traitement_script_dans_conditions { transition scripts conditions components transitions script ports places } {
+		proc Traitement_script_dans_conditions { transition scripts conditions transitions} {
 			if { [llength $scripts]>0 } {
 				set flag_conditions_script 1;
 				#Pour chaque formule dans scripts
@@ -33,8 +33,8 @@ namespace eval Generate_config {
 						#Substitition de script_untrimmed par script trimmed dans conditions:
 						set conditions [regsub "***=$script_untrimmed" $conditions " $script "];
 					} else {
-						puts "Config_ERROR: Configuration de la condition sur la variable $id_var de la transition $transition n'est pas valable ! \n"
-						Ecriture_Config $components_loading $components $transitions $script $ports $places; exit 1;
+						uplevel 1 { Ecriture_Config $components_loading $components $transitions $Script $ports $places }; 
+						error "Config_ERROR" "Configuration de la condition sur la variable $id_var de la transition $transition n'est pas valable ! \n"		
 					}
 				}
 			}
@@ -42,7 +42,7 @@ namespace eval Generate_config {
 		}
 
 		# Traitement des services contenu dans les conditions:
-		proc Traitement_services_dans_conditions { transition services conditions components transitions script ports places requetes_conditions } {
+		proc Traitement_services_dans_conditions { transition services conditions transitions requetes_conditions } {
 			if { [llength $services]>0 } {
 				#Variables:
 				set id_request ""; #nom du requete
@@ -66,13 +66,13 @@ namespace eval Generate_config {
 						} elseif { $len == 3 } {
 							set transitions [join [list $transitions "sensibilise_transition_service $transition $id_request [lindex $request_splitted 1] [lindex $request_splitted 2]; # sensibilise partiellement transition $transition sur le status [lindex $request_splitted 1] de $id_request à l'exception \n"] ""]
 						} else {
-              Ecriture_Config $components_loading $components $transitions $script $ports $places
+              uplevel 1 { Ecriture_Config $components_loading $components $transitions $script $ports $places }
 							error "Invalid transition condition" "Condition $id_request [lindex $request_splitted 1] [lindex $request_splitted 2] of transition $transition is not valid."
 						}
 						#Substitition de /requete/ par id_request dans contenu:
 						set conditions [regsub -all "$service" $conditions "\[lindex \$lst_temp($id_request) 0\]"];  #lst_temp sera défini dans Data.tcl/GENERATE_CONDITIONS_TOTALES
 					} else {
-            Ecriture_Config $components_loading $components $transitions $script $ports $places
+            uplevel 1 { Ecriture_Config $components_loading $components $transitions $Script $ports $places }
             error "Invalid transition condition (multiple request usage)" "In transition $transition: this version does not support mutiple usage of the same request $id_request with different status as condition on the same transition."
 					}
 				}
@@ -82,7 +82,7 @@ namespace eval Generate_config {
 		}
 
 		# Traitement des services contenu dans les actions:
-		proc Traitement_services_dans_actions { transition services components transitions script ports places requetes_actions } {
+		proc Traitement_services_dans_actions { transition services transitions requetes_actions } {
 			if { [llength $services]>0 } {
 				foreach service $services {
 					set service [string trimright [string trimleft $service "/"] "/"]
@@ -119,7 +119,7 @@ namespace eval Generate_config {
   						set transitions [join [list $transitions "associer_service_transition $transition [lindex $service 0] [lindex $service 1] \{$parametres\} ; #Associer le service [lindex $service 1] du composant [lindex $service 0] à la transition $transition avec [lindex $service 2] comme paramètre\n"] ""]
   						lappend requetes_actions [list [lindex $service 0] [lindex $service 1] "t$transition"]
   					} else {
-  						Ecriture_Config $components_loading $components $transitions $script $ports $places
+  						uplevel 1 { Ecriture_Config $components_loading $components $transitions $Script $ports $places }
               error "Invalid transition actions" "Given actions for transition $transition are not valid"
   					}
           }
@@ -192,13 +192,13 @@ namespace eval Generate_config {
 					set transitions [join [list $transitions "\t#----Formule logique: $conditions:\n\n"] ""]
 
 					#Traitement des services contenus dans Conditions:
-					set resultat [Traitement_services_dans_conditions $transition $conditions_services $conditions $components $transitions $Script $ports $places $requetes_conditions];
+					set resultat [Traitement_services_dans_conditions $transition $conditions_services $conditions $transitions $requetes_conditions];
 					set transitions [lindex $resultat 1]
 					set conditions  [lindex $resultat 0]
 					set requetes_conditions [lindex $resultat 2]
 
 					#Traitement des scripts contenus dans Conditions:
-					set resultat [Traitement_script_dans_conditions $transition $conditions_scripts $conditions $components $transitions $Script $ports $places];
+					set resultat [Traitement_script_dans_conditions $transition $conditions_scripts $conditions $transitions];
 					set transitions [lindex $resultat 1]
 					set conditions  [lindex $resultat 0]
 
@@ -232,7 +232,7 @@ namespace eval Generate_config {
 
 					#Traitement des services contenus dans actions:
 
-					set resultat [Traitement_services_dans_actions $transition $actions_services  $components $transitions $Script $ports $places $requetes_actions];
+					set resultat [Traitement_services_dans_actions $transition $actions_services $transitions $requetes_actions];
 					set transitions [lindex $resultat 1]
 					set requetes_actions  [lindex $resultat 0]
 
@@ -385,7 +385,7 @@ namespace eval Generate_config {
 			set actions_scripts [regexp -all -inline {(?:\?.*\?){1,1}?} $actions];
 
 			#Traitement des services contenus dans actions:
-			set resultat [Traitement_services_dans_actions $transition $actions_services $components $transitions $Script $ports $places $requetes_actions];
+			set resultat [Traitement_services_dans_actions $transition $actions_services $transitions $requetes_actions];
 			set transitions [lindex $resultat 1]
 			set requetes_actions  [lindex $resultat 0]
 

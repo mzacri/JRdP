@@ -149,10 +149,10 @@
 		}
 
   	#10----fonction de gestion de TIMER:
-		proc TIMER { time_ref time_target { precision 0 } } {
+		proc TIMER { time_ref time_target } {
 			set time_clock [clock seconds]
 			set time_clock [expr $time_clock - [join [list "\$Script" "::" $time_ref] ""]]
-			if { [expr ($time_target - $time_clock) <= $precision] && [expr ($time_target - $time_clock) >= -1*$precision] } {
+			if { [expr ($time_target - $time_clock) <= 0]} {
 				return 1;
 			} else {
 				return 0;
@@ -216,8 +216,8 @@
         # puts "***** Request: $request"
 				if {  [info exists $req] } {
 					set status [[expr $$req] status]
-          puts "***** Request: $request"
-          puts "\tStatus: $status"
+          #puts "***** Request: $request"
+          #puts "\tStatus: $status"
 					set liste $::JRdP::Requests_status($request);
 					set old_status [lindex $liste 0]
 					if { $old_status != $status } {
@@ -312,7 +312,7 @@
 		}
 
 	#16----Actions sur les transitions:
-		proc ACTIONS_TRANSITIONS {} {
+		proc ACTIONS_TRANSITIONS {with_nd} {
 			for {set t 0} {$t < $JRdP::nb_t} { incr t } {
 				#Choix des transitions valides:
 				if { [lindex $JRdP::Transitions_valides $t] } {
@@ -343,11 +343,10 @@
 					set JRdP::cr 0;
 
 					#Communication avec nd à travers le named pipe fifo:
-					uplevel 1 {
-						if { $with_nd } {
-							puts $JRdP::fifo "t$t"
-							flush $JRdP::fifo
-						}
+
+					if {$with_nd} {
+						puts $JRdP::fifo "t$t"
+						flush $JRdP::fifo
 					}
 				}
 			}
