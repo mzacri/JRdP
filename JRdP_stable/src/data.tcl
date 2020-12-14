@@ -351,3 +351,19 @@
 				}
 			}
 		}
+	#17----Test GenoM attribute's result on a condition:
+	#Example: Attribute_result tractor::Get_TRState ready;
+	proc Attribute_result {attribute result} {
+		set handle [$attribute -s &];
+		while {[$handle status] != "done"} {
+			after 1 set end 1
+	      		vwait end
+		}
+		set dic [$handle result];
+		#puts [lindex $dic 1] 
+		if {[lindex $dic 1]==$result} {
+			return 1;
+		} else {
+			return 0;
+		}
+	} 
