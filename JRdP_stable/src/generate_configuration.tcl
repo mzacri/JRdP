@@ -97,7 +97,7 @@ namespace eval Generate_config {
             # handle the parameters as dictionary case
             set dic [lindex $dicts_list 0]
             # remove dictionary from service string
-            regsub $dic $service "" service
+	    regsub "\{.*\}" $service "" service
             # split word (by spaces) considering the format: <component> <service>
             set service [regexp -all -inline {\S+} $service]
             if { [llength $service] != 2 } {
