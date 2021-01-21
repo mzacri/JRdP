@@ -119,6 +119,7 @@ namespace eval JRdP {
       puts "** Waiting for connection with nd..."
       after 1500;
     }
+    after 3000;
   }
 
   #Logs:
