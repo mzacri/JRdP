@@ -20,7 +20,7 @@ namespace import ::genomix::*;
 # If using the option --with-nd, this directory is used to create the FIFO
 # to communicate with nd and the temporary ndr file.
 # This can be changed to any directory with write access.
-set tmp_dir "/tmp"
+set tmp_dir "/opt/r2t2/tmp"
 # Default logfile. Created in the working directory (in which is located the given .ndr file)
 set log_file "jrdp_logs.txt"
 # ------- End of Parameters ---------------
