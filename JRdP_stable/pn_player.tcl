@@ -106,7 +106,10 @@ namespace eval JRdP {
     source $cur_path/src/pilot_ndstepper.tcl;
 
     if [catch {exec mkfifo $nd_fifo_file} ex] {
-      exec rm $nd_fifo_file
+      puts $ex
+      puts "Deleting $nd_fifo_file... .If blocking, make sure you have permissions to write in $tmp_dir"
+      catch {exec rm $nd_fifo_file} err_ex
+      puts $err_ex
       exec mkfifo $nd_fifo_file
     }
     set nd_pid [exec nd $nd_temp_ndr_file &]
