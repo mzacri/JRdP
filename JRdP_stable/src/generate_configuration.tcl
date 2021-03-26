@@ -328,12 +328,12 @@ namespace eval Generate_config {
 				#Configuration Components:
 				} elseif { [string match -nocase "*Components*" [lindex $ligne 0]] } {
 					set local_components "";
-					set genomix_host_port "";
+					set genomix_host_port {};
 					if { [regexp {::} $ligne 1] } {
 						set genomix_host_port [lindex $ligne 1]
 					} else {
         				Ecriture_Config $components_loading $components $transitions $Script $ports $places
-						error "Invalid genomix hostname::port" "Genomix hostname::port is not detected in first line after \"Genomix hostname::port\" denominator"
+						error "Invalid genomix hostname:port" "Genomix hostname:port is not detected in first line after \"Genomix hostname:port\" denominator"
 					}
 					set ligne [lrange $ligne 2 end]
 					foreach element $ligne {
@@ -348,7 +348,7 @@ namespace eval Generate_config {
 						}
 					}
 					set components [join [list $components $local_components]]
-					set loading "#-----Genomixd components:\nset handle \[genomix $genomix_host_port\]; #Connexion deomon genomix \nset components { $local_components };  	#Modifiable		#Composant .s à charger\nLoad_components \$handle \$components ; #Chargement des composants (components) sur le deamon genomix (handle)\n\n"
+					set loading "#-----Genomixd components:\nset host_port [exec /bin/sh -c "echo $genomix_host_port"]\nset handle \[genomix \$host_port\]; #Connexion deomon genomix \nset components { $local_components };  	#Modifiable		#Composant .s à charger\nLoad_components \$handle \$components ; #Chargement des composants (components) sur le deamon genomix (handle)\n\n"
 					set components_loading [join [list $components_loading $loading]]
 					unset local_components
 					unset genomix_host_port
